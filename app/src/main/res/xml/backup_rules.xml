@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include
+        domain="database"
+        path="plantation_ledger.db"/>
+    <include
+        domain="file"
+        path="receipts/"/>
+    <include
+        domain="file"
+        path="auto_backups/"/>
+</full-backup-content>
