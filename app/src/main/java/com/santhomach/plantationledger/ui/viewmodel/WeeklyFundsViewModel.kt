@@ -55,9 +55,11 @@ class WeeklyFundsViewModel @Inject constructor(
             endDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
         ).map { summary ->
             WeekComparison(
+                // Pesticide / fertilizer bills are managed in the Vendor Ledger, not in this balance.
                 totalExpenses = summary.totalLaborCost
                     .add(summary.totalOvertimeCost)
-                    .add(summary.totalOtherExpenses),
+                    .add(summary.totalOtherExpenses)
+                    .subtract(summary.totalVendorPurchases),
                 totalIncome = summary.totalIncome,
                 totalPayments = summary.totalAdvanceAmount.add(summary.totalWeeklyPayment)
             )
@@ -151,6 +153,7 @@ class WeeklyFundsViewModel @Inject constructor(
             val totalExpenses = summary.totalLaborCost
                 .add(summary.totalOvertimeCost)
                 .add(summary.totalOtherExpenses)
+                .subtract(summary.totalVendorPurchases)
             val funds = weeklyFunds.value.find { LocalDate.parse(it.weekStartDate) == startDate }
             val paymentMade = funds?.paymentMade ?: BigDecimal.ZERO
             paymentMade.subtract(totalExpenses)

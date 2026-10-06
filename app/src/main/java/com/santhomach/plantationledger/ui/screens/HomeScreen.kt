@@ -151,8 +151,6 @@ fun HomeScreen(
     val yearSummary by actualViewModel.yearSummary.collectAsState()
     val allTimeSummary by actualViewModel.allTimeSummary.collectAsState()
     val previousWeekCarryover by actualViewModel.previousWeekCarryover.collectAsState()
-    val weekVendorExpenses by actualViewModel.weekVendorExpenses.collectAsState()
-    val weekVendorPaymentsMade by actualViewModel.weekVendorPaymentsMade.collectAsState()
     val vendorLedger by actualViewModel.vendorLedger.collectAsState()
     val uiState by actualViewModel.uiState.collectAsState()
 
@@ -245,8 +243,6 @@ fun HomeScreen(
         yearSummary = yearSummary,
         allTimeSummary = allTimeSummary,
         previousWeekCarryover = previousWeekCarryover,
-        weekVendorExpenses = weekVendorExpenses,
-        weekVendorPaymentsMade = weekVendorPaymentsMade,
         vendorLedger = vendorLedger,
         snackbarHostState = snackbarHostState,
         onNavigateToExpenseEntry = onNavigateToExpenseEntry,
@@ -275,8 +271,6 @@ fun HomeScreenContent(
     yearSummary: ExpenseSummary,
     allTimeSummary: ExpenseSummary,
     previousWeekCarryover: BigDecimal = BigDecimal.ZERO,
-    weekVendorExpenses: BigDecimal = BigDecimal.ZERO,
-    weekVendorPaymentsMade: BigDecimal = BigDecimal.ZERO,
     vendorLedger: VendorLedger = VendorLedger(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onNavigateToExpenseEntry: (LocalDate, Int?) -> Unit,
@@ -371,9 +365,7 @@ fun HomeScreenContent(
                         weekSummary = weekSummary,
                         yearSummary = yearSummary,
                         allTimeSummary = allTimeSummary,
-                        previousWeekCarryover = previousWeekCarryover,
-                        weekVendorExpenses = weekVendorExpenses,
-                        weekVendorPaymentsMade = weekVendorPaymentsMade
+                        previousWeekCarryover = previousWeekCarryover
                     )
                 }
 
@@ -461,20 +453,17 @@ private fun PerformanceHeroCard(
     weekSummary: ExpenseSummary,
     yearSummary: ExpenseSummary,
     allTimeSummary: ExpenseSummary,
-    previousWeekCarryover: BigDecimal = BigDecimal.ZERO,
-    weekVendorExpenses: BigDecimal = BigDecimal.ZERO,
-    weekVendorPaymentsMade: BigDecimal = BigDecimal.ZERO
+    previousWeekCarryover: BigDecimal = BigDecimal.ZERO
 ) {
-    // Vendor (pesticide/fertilizer) bills are settled separately, so they are excluded from
-    // the week's cash expenses and the vendor payments actually made are added to payments.
+    // Pesticide / fertilizer bills are managed in the Vendor Ledger, so neither the purchases
+    // nor the payments to vendors take part in the weekly excess / short balance.
     val weekExpenses = weekSummary.totalLaborCost
         .add(weekSummary.totalOvertimeCost)
         .add(weekSummary.totalOtherExpenses)
-        .subtract(weekVendorExpenses)
+        .subtract(weekSummary.totalVendorPurchases)
     val weekPayments = weekSummary.totalAdvanceAmount
         .add(weekSummary.totalWeeklyPayment)
         .add(weekSummary.totalExcessBalance)
-        .add(weekVendorPaymentsMade)
     val weekBalance = weekPayments.subtract(weekExpenses).add(previousWeekCarryover)
 
     val yearExpenses = yearSummary.totalLaborCost

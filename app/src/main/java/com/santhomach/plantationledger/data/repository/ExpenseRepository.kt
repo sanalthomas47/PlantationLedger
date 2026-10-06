@@ -14,6 +14,8 @@ import com.santhomach.plantationledger.data.model.WeeklySettlement
 import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerPayment
 import com.santhomach.plantationledger.data.model.WorkerType
+import com.santhomach.plantationledger.data.model.isVendorPurchase
+import com.santhomach.plantationledger.data.model.vendorPurchaseTotal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.ListSerializer
@@ -222,10 +224,7 @@ class ExpenseRepository @Inject constructor(
             val paidOnThisDay = try {
                 Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
                     .filter { entry ->
-                        entry.isPaid && (
-                            entry.typeName.contains("Pesticide", ignoreCase = true) ||
-                                entry.typeName.contains("Fertilizer", ignoreCase = true)
-                            )
+                        entry.isPaid && entry.isVendorPurchase()
                     }
                     .fold(BigDecimal.ZERO) { sum, entry -> sum.add(entry.amount) }
             } catch (e: Exception) {
@@ -246,9 +245,7 @@ class ExpenseRepository @Inject constructor(
                     )
                     var changed = false
                     val updated = entries.map { entry ->
-                        if (remaining.signum() > 0 && !entry.isPaid &&
-                            (entry.typeName.contains("Pesticide", ignoreCase = true) ||
-                                entry.typeName.contains("Fertilizer", ignoreCase = true))
+                        if (remaining.signum() > 0 && !entry.isPaid && entry.isVendorPurchase()
                         ) {
                             remaining = remaining.subtract(entry.amount)
                             changed = true
@@ -289,6 +286,7 @@ class ExpenseRepository @Inject constructor(
             val totalAdvanceAmount = expenses.sumOf { it.advanceAmount }
             val totalExcessBalance = expenses.sumOf { it.excessBalance }
             val totalWeeklyPayment = expenses.sumOf { it.weeklyPaymentDone }
+            val totalVendorPurchases = expenses.sumOf { it.vendorPurchaseTotal() }
             val netAmount = expenses.sumOf { it.calculateNetAmount() }
             val totalDays = expenses.size
 
@@ -321,6 +319,7 @@ class ExpenseRepository @Inject constructor(
                 totalAdvanceAmount = totalAdvanceAmount,
                 totalWeeklyPayment = totalWeeklyPayment,
                 totalExcessBalance = totalExcessBalance,
+                totalVendorPurchases = totalVendorPurchases,
                 netAmount = netAmount,
                 totalDays = totalDays,
                 averageDailyIncome = averageDailyIncome,
@@ -347,6 +346,7 @@ class ExpenseRepository @Inject constructor(
                 totalAdvanceAmount = summary.totalAdvanceAmount,
                 totalWeeklyPayment = summary.totalWeeklyPayment,
                 totalExcessBalance = summary.totalExcessBalance,
+                totalVendorPurchases = summary.totalVendorPurchases,
                 netAmount = summary.netAmount,
                 totalWeeks = weeks,
                 averageWeeklyIncome = summary.totalIncome.divide(weekCount, RoundingMode.HALF_EVEN),
@@ -455,6 +455,8 @@ data class ExpenseSummary(
     val totalAdvanceAmount: BigDecimal = BigDecimal.ZERO,
     val totalWeeklyPayment: BigDecimal = BigDecimal.ZERO,
     val totalExcessBalance: BigDecimal = BigDecimal.ZERO,
+    /** Pesticide / fertilizer purchases in the range; excluded from excess / short. */
+    val totalVendorPurchases: BigDecimal = BigDecimal.ZERO,
     val netAmount: BigDecimal = BigDecimal.ZERO,
     val totalDays: Int = 0,
     val averageDailyIncome: BigDecimal = BigDecimal.ZERO,
@@ -472,6 +474,8 @@ data class WeeklyExpenseSummary(
     val totalAdvanceAmount: BigDecimal = BigDecimal.ZERO,
     val totalWeeklyPayment: BigDecimal = BigDecimal.ZERO,
     val totalExcessBalance: BigDecimal = BigDecimal.ZERO,
+    /** Pesticide / fertilizer purchases in the range; excluded from excess / short. */
+    val totalVendorPurchases: BigDecimal = BigDecimal.ZERO,
     val netAmount: BigDecimal = BigDecimal.ZERO,
     val totalWeeks: Int = 0,
     val averageWeeklyIncome: BigDecimal = BigDecimal.ZERO,

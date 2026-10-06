@@ -265,9 +265,11 @@ fun ReportsScreen(
                         val totalExpenses = dailySummary.totalLaborCost
                             .add(dailySummary.totalOvertimeCost)
                             .add(dailySummary.totalOtherExpenses)
+                        // Offset leaves out pesticide / fertilizer bills (managed in the Vendor Ledger).
                         val weekExpenses = weeklySummary.totalLaborCost
                             .add(weeklySummary.totalOvertimeCost)
                             .add(weeklySummary.totalOtherExpenses)
+                            .subtract(weeklySummary.totalVendorPurchases)
                         val weekPayments = weeklySummary.totalAdvanceAmount
                             .add(weeklySummary.totalWeeklyPayment)
                             .add(weeklySummary.totalExcessBalance)
@@ -276,6 +278,7 @@ fun ReportsScreen(
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                         SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true)
                         SummaryRow("TOTAL OFFSET (EXPENSES - PAYMENTS)", "₹$offset", isTotal = true)
+                        OffsetNote()
                         SummaryRow("TOTAL INCOME", "₹${dailySummary.totalIncome}", isTotal = true)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                         SummaryRow("Total Days", dailySummary.totalDays.toString())
@@ -308,11 +311,15 @@ fun ReportsScreen(
                         val totalPayments = weeklySummary.totalAdvanceAmount
                             .add(weeklySummary.totalWeeklyPayment)
                             .add(weeklySummary.totalExcessBalance)
-                        val offset = totalExpenses.subtract(totalPayments)
+                        // Offset leaves out pesticide / fertilizer bills (managed in the Vendor Ledger).
+                        val offset = totalExpenses
+                            .subtract(weeklySummary.totalVendorPurchases)
+                            .subtract(totalPayments)
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                         SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true)
                         SummaryRow("TOTAL OFFSET (EXPENSES - PAYMENTS)", "₹$offset", isTotal = true)
+                        OffsetNote()
                         SummaryRow("TOTAL INCOME", "₹${weeklySummary.totalIncome}", isTotal = true)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                         SummaryRow("Total Weeks", weeklySummary.totalWeeks.toString())
@@ -828,4 +835,13 @@ private fun SummaryRow(
             style = if (isTotal) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium
         )
     }
+}
+
+@Composable
+private fun OffsetNote() {
+    Text(
+        text = "Offset excludes pesticide/fertilizer bills (tracked in Vendor Ledger)",
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodySmall
+    )
 }

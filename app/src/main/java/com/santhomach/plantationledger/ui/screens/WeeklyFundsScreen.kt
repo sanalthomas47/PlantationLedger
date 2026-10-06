@@ -123,7 +123,7 @@ fun WeeklyFundsScreen(
 
                         val comp = comparison
                         if (comp != null) {
-                            SummaryRow("Total Expenses", "₹${comp.totalExpenses}")
+                            SummaryRow("Expenses (excl. vendor bills)", "₹${comp.totalExpenses}")
                             val balance = comp.totalPayments.subtract(comp.totalExpenses)
                             if (comp.totalPayments > BigDecimal.ZERO) {
                                 SummaryRow("Actual Payments Made", "₹${comp.totalPayments}")

@@ -22,6 +22,8 @@ import com.santhomach.plantationledger.data.model.WeeklyFunds
 import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerGroupEntry
 import com.santhomach.plantationledger.data.model.WorkerType
+import com.santhomach.plantationledger.data.model.balanceExpenses
+import com.santhomach.plantationledger.data.model.vendorPurchaseTotal
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,7 +97,8 @@ class DailyExpenseViewModel @Inject constructor(
 
     /**
      * Money carried over from all days before the Monday of the current expense's week:
-     * (advances + weekly payments) - (labour + overtime + other expenses).
+     * (advances + weekly payments) - (labour + overtime + other expenses excluding vendor bills).
+     * Pesticide / fertilizer purchases are managed in the Vendor Ledger and are not part of this balance.
      */
     val previousExcessBalance: StateFlow<BigDecimal> = _currentExpense
         .flatMapLatest { expense ->
@@ -114,7 +117,7 @@ class DailyExpenseViewModel @Inject constructor(
                         acc.add(e.advanceAmount).add(e.weeklyPaymentDone)
                     }
                     val totalExpenses = previousRecords.fold(BigDecimal.ZERO) { acc, e ->
-                        acc.add(e.totalLaborCost).add(e.totalOvertimeCost).add(e.totalOtherExpensesCost)
+                        acc.add(e.balanceExpenses())
                     }
                     emit(totalPaid.subtract(totalExpenses))
                 }
@@ -127,15 +130,6 @@ class DailyExpenseViewModel @Inject constructor(
         .flatMapLatest { expense ->
             val date = expense?.date
             if (date != null) repository.getVendorPaymentsBySourceExpenseDateFlow(date)
-            else flowOf(emptyList())
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    /** Vendor payments physically made on the current expense's date. */
-    val vendorPaymentsMadeOnDate: StateFlow<List<VendorPayment>> = _currentExpense
-        .flatMapLatest { expense ->
-            val date = expense?.date
-            if (date != null) repository.getVendorPaymentsByDateFlow(date)
             else flowOf(emptyList())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -783,19 +777,20 @@ class DailyExpenseViewModel @Inject constructor(
             it.totalLaborCost.add(it.totalOvertimeCost).add(it.totalOtherExpensesCost)
         } ?: BigDecimal.ZERO
 
-    /** Advances + weekly payment + vendor payments made on this date. */
-    fun getTotalPaymentsMade(): BigDecimal {
-        val fromExpense = _currentExpense.value?.let { it.advanceAmount.add(it.weeklyPaymentDone) } ?: BigDecimal.ZERO
-        val vendorPaid = vendorPaymentsMadeOnDate.value.fold(BigDecimal.ZERO) { acc, p -> acc.add(p.amount) }
-        return fromExpense.add(vendorPaid)
-    }
+    /** Pesticide / fertilizer purchases of the current day (tracked in the Vendor Ledger). */
+    fun getVendorPurchases(): BigDecimal =
+        _currentExpense.value?.vendorPurchaseTotal() ?: BigDecimal.ZERO
 
-    /** Payments made + carry-over from earlier weeks - actual expenses. */
+    /** Advances + weekly payment of the current day. Vendor payments are not part of the balance. */
+    fun getTotalPaymentsMade(): BigDecimal =
+        _currentExpense.value?.let { it.advanceAmount.add(it.weeklyPaymentDone) } ?: BigDecimal.ZERO
+
+    /** Payments made + carry-over from earlier weeks - (actual expenses excluding vendor bills). */
     fun getNetAmount(): BigDecimal {
-        val totalActualExpenses = getTotalActualExpenses()
+        val balanceExpenses = getTotalActualExpenses().subtract(getVendorPurchases())
         val totalPaymentsMade = getTotalPaymentsMade()
         val carryover = previousExcessBalance.value
-        return totalPaymentsMade.add(carryover).subtract(totalActualExpenses)
+        return totalPaymentsMade.add(carryover).subtract(balanceExpenses)
     }
 
     /**

@@ -8,6 +8,8 @@ import com.santhomach.plantationledger.data.model.IncomeEntry
 import com.santhomach.plantationledger.data.model.OtherExpenseEntry
 import com.santhomach.plantationledger.data.model.VendorPayment
 import com.santhomach.plantationledger.data.model.WorkerGroupEntry
+import com.santhomach.plantationledger.data.model.balanceExpenses
+import com.santhomach.plantationledger.data.model.isVendorPurchase
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
 import com.santhomach.plantationledger.data.repository.ExpenseSummary
 import com.santhomach.plantationledger.data.repository.WeeklyExpenseSummary
@@ -162,52 +164,21 @@ class ReportsViewModel @Inject constructor(
         LocalDate.now().with(DayOfWeek.SATURDAY).format(iso)
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExpenseSummary())
 
-    /** Pesticide + fertilizer purchases recorded this week. */
-    val weekVendorExpenses: StateFlow<BigDecimal> = repository.getDailyExpensesByDateRangeFlow(
-        LocalDate.now().with(DayOfWeek.MONDAY).format(iso),
-        LocalDate.now().with(DayOfWeek.SATURDAY).format(iso)
-    ).map { expenses ->
-        expenses.fold(BigDecimal.ZERO) { acc, expense ->
-            val vendorAmount = try {
-                Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
-                    .filter { isVendorEntry(it) }
-                    .fold(BigDecimal.ZERO) { sum, entry -> sum.add(entry.amount) }
-            } catch (e: Exception) {
-                BigDecimal.ZERO
-            }
-            acc.add(vendorAmount)
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
-
-    /** Vendor payments made this week. */
-    val weekVendorPaymentsMade: StateFlow<BigDecimal> = repository.getVendorPaymentsByDateRangeFlow(
-        LocalDate.now().with(DayOfWeek.MONDAY).format(iso),
-        LocalDate.now().with(DayOfWeek.SATURDAY).format(iso)
-    ).map { payments ->
-        payments.fold(BigDecimal.ZERO) { acc, payment -> acc.add(payment.amount) }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
-
     /**
-     * Money left over from last week: (advances + weekly payments + excess + vendor payments) - expenses.
+     * Money left over from last week (Monday to Sunday):
+     * (advances + weekly payments + excess) - (labour + overtime + other expenses excluding vendor bills).
+     * Pesticide / fertilizer purchases and their payments are managed in the Vendor Ledger and are
+     * deliberately left out of this balance.
      */
-    val previousWeekCarryover: StateFlow<BigDecimal> = combine(
-        repository.getDailyExpensesByDateRangeFlow(
-            LocalDate.now().with(DayOfWeek.MONDAY).minusWeeks(1).format(iso),
-            LocalDate.now().with(DayOfWeek.MONDAY).minusDays(1).format(iso)
-        ),
-        repository.getVendorPaymentsByDateRangeFlow(
-            LocalDate.now().with(DayOfWeek.MONDAY).minusWeeks(1).format(iso),
-            LocalDate.now().with(DayOfWeek.MONDAY).minusDays(1).format(iso)
-        )
-    ) { expenses, vendorPayments ->
+    val previousWeekCarryover: StateFlow<BigDecimal> = repository.getDailyExpensesByDateRangeFlow(
+        LocalDate.now().with(DayOfWeek.MONDAY).minusWeeks(1).format(iso),
+        LocalDate.now().with(DayOfWeek.MONDAY).minusDays(1).format(iso)
+    ).map { expenses ->
         val paymentsMade = expenses.fold(BigDecimal.ZERO) { acc, e ->
             acc.add(e.advanceAmount).add(e.weeklyPaymentDone).add(e.excessBalance)
         }
-        val vendorPaid = vendorPayments.fold(BigDecimal.ZERO) { acc, p -> acc.add(p.amount) }
-        val totalExpenses = expenses.fold(BigDecimal.ZERO) { acc, e ->
-            acc.add(e.totalLaborCost).add(e.totalOvertimeCost).add(e.totalOtherExpensesCost)
-        }
-        paymentsMade.add(vendorPaid).subtract(totalExpenses)
+        val balanceExpenses = expenses.fold(BigDecimal.ZERO) { acc, e -> acc.add(e.balanceExpenses()) }
+        paymentsMade.subtract(balanceExpenses)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     /** All-time pesticide / fertilizer purchases with paid status. */
@@ -222,7 +193,7 @@ class ReportsViewModel @Inject constructor(
         expenses.sortedBy { it.date }.forEach { expense ->
             try {
                 Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
-                    .filter { isVendorEntry(it) }
+                    .filter { it.isVendorPurchase() }
                     .forEach { entry ->
                         items.add(
                             VendorExpenseItem(
@@ -681,8 +652,4 @@ class ReportsViewModel @Inject constructor(
         }
         return map.values.sortedWith(compareBy({ it.workerType }, { it.comment }))
     }
-
-    private fun isVendorEntry(entry: OtherExpenseEntry): Boolean =
-        entry.typeName.contains("Pesticide", ignoreCase = true) ||
-            entry.typeName.contains("Fertilizer", ignoreCase = true)
 }

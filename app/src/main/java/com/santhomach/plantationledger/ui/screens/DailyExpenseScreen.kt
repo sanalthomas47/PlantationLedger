@@ -129,7 +129,6 @@ fun DailyExpenseScreen(
     val workTasks by viewModel.workTasks.collectAsState()
     val previousExcessBalance by viewModel.previousExcessBalance.collectAsState()
     val vendorPaymentsForExpense by viewModel.vendorPaymentsForCurrentExpense.collectAsState()
-    val vendorPaymentsMadeOnDate by viewModel.vendorPaymentsMadeOnDate.collectAsState()
 
     val scrollState = rememberScrollState()
 
@@ -570,6 +569,10 @@ fun DailyExpenseScreen(
                     SummaryRow("Other Expenses", "₹${currentExpense?.totalOtherExpensesCost ?: BigDecimal.ZERO}")
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     SummaryRow("TOTAL ACTUAL COSTS", "₹${viewModel.getTotalActualExpenses()}", isTotal = true)
+                    val vendorPurchases = viewModel.getVendorPurchases()
+                    if (vendorPurchases > BigDecimal.ZERO) {
+                        SummaryRow("Less: pesticide/fertilizer (Vendor Ledger)", "-₹$vendorPurchases")
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
@@ -580,10 +583,6 @@ fun DailyExpenseScreen(
                     SummaryRow("Previous Excess/Deficit", "₹$previousExcessBalance")
                     SummaryRow("Total Advances Paid", "₹${currentExpense?.advanceAmount ?: BigDecimal.ZERO}")
                     SummaryRow("Weekly Settlement Done", "₹${currentExpense?.weeklyPaymentDone ?: BigDecimal.ZERO}")
-                    val vendorPaid = vendorPaymentsMadeOnDate.fold(BigDecimal.ZERO) { acc, p -> acc.add(p.amount) }
-                    if (vendorPaid > BigDecimal.ZERO) {
-                        SummaryRow("Vendor Payments Made", "₹$vendorPaid")
-                    }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     SummaryRow("TOTAL PAYMENTS", "₹${viewModel.getTotalPaymentsMade()}", isTotal = true)
                     val net = viewModel.getNetAmount()
