@@ -22,7 +22,8 @@ import com.santhomach.plantationledger.data.model.WeeklyFunds
 import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerGroupEntry
 import com.santhomach.plantationledger.data.model.WorkerType
-import com.santhomach.plantationledger.data.model.balanceExpenses
+import com.santhomach.plantationledger.data.model.balancePayments
+import com.santhomach.plantationledger.data.model.balanceTotal
 import com.santhomach.plantationledger.data.model.vendorPurchaseTotal
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,9 +97,8 @@ class DailyExpenseViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
-     * Money carried over from all days before the Monday of the current expense's week:
-     * (advances + weekly payments) - (labour + overtime + other expenses excluding vendor bills).
-     * Pesticide / fertilizer purchases are managed in the Vendor Ledger and are not part of this balance.
+     * Cash balance brought forward from all days before the Monday of the current expense's week
+     * (same rule as Home and Reports, see CashBalance.kt). Vendor bills are not part of it.
      */
     val previousExcessBalance: StateFlow<BigDecimal> = _currentExpense
         .flatMapLatest { expense ->
@@ -112,14 +112,7 @@ class DailyExpenseViewModel @Inject constructor(
                 }
                 val startStr = expenseDate.with(DayOfWeek.MONDAY).format(DateTimeFormatter.ISO_LOCAL_DATE)
                 flow {
-                    val previousRecords = repository.getDailyExpensesBeforeDate(startStr)
-                    val totalPaid = previousRecords.fold(BigDecimal.ZERO) { acc, e ->
-                        acc.add(e.advanceAmount).add(e.weeklyPaymentDone)
-                    }
-                    val totalExpenses = previousRecords.fold(BigDecimal.ZERO) { acc, e ->
-                        acc.add(e.balanceExpenses())
-                    }
-                    emit(totalPaid.subtract(totalExpenses))
+                    emit(repository.getDailyExpensesBeforeDate(startStr).balanceTotal())
                 }
             }
         }
@@ -781,9 +774,9 @@ class DailyExpenseViewModel @Inject constructor(
     fun getVendorPurchases(): BigDecimal =
         _currentExpense.value?.vendorPurchaseTotal() ?: BigDecimal.ZERO
 
-    /** Advances + weekly payment of the current day. Vendor payments are not part of the balance. */
+    /** Advances + weekly payment (+ excess balance) of the current day. Vendor payments are not part of the balance. */
     fun getTotalPaymentsMade(): BigDecimal =
-        _currentExpense.value?.let { it.advanceAmount.add(it.weeklyPaymentDone) } ?: BigDecimal.ZERO
+        _currentExpense.value?.balancePayments() ?: BigDecimal.ZERO
 
     /** Payments made + carry-over from earlier weeks - (actual expenses excluding vendor bills). */
     fun getNetAmount(): BigDecimal {

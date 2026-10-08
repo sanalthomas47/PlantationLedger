@@ -8,7 +8,7 @@ import com.santhomach.plantationledger.data.model.IncomeEntry
 import com.santhomach.plantationledger.data.model.OtherExpenseEntry
 import com.santhomach.plantationledger.data.model.VendorPayment
 import com.santhomach.plantationledger.data.model.WorkerGroupEntry
-import com.santhomach.plantationledger.data.model.balanceExpenses
+import com.santhomach.plantationledger.data.model.balanceBroughtForward
 import com.santhomach.plantationledger.data.model.isVendorPurchase
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
 import com.santhomach.plantationledger.data.repository.ExpenseSummary
@@ -158,27 +158,25 @@ class ReportsViewModel @Inject constructor(
         "2100-12-31"
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExpenseSummary())
 
-    /** Current working week (Monday to Saturday). */
+    /** Current week (Monday to Sunday). */
     val weekSummary: StateFlow<ExpenseSummary> = repository.getDailyExpenseSummaryFlow(
         LocalDate.now().with(DayOfWeek.MONDAY).format(iso),
-        LocalDate.now().with(DayOfWeek.SATURDAY).format(iso)
+        LocalDate.now().with(DayOfWeek.SUNDAY).format(iso)
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ExpenseSummary())
 
+    private val allExpenses = repository.getDailyExpensesByDateRangeFlow("1900-01-01", "2100-12-31")
+
     /**
-     * Money left over from last week (Monday to Sunday):
-     * (advances + weekly payments + excess) - (labour + overtime + other expenses excluding vendor bills).
-     * Pesticide / fertilizer purchases and their payments are managed in the Vendor Ledger and are
-     * deliberately left out of this balance.
+     * Cash balance brought forward into the current week: the result of every earlier day
+     * (see CashBalance.kt). Positive = excess held by the manager, negative = short.
      */
-    val previousWeekCarryover: StateFlow<BigDecimal> = repository.getDailyExpensesByDateRangeFlow(
-        LocalDate.now().with(DayOfWeek.MONDAY).minusWeeks(1).format(iso),
-        LocalDate.now().with(DayOfWeek.MONDAY).minusDays(1).format(iso)
-    ).map { expenses ->
-        val paymentsMade = expenses.fold(BigDecimal.ZERO) { acc, e ->
-            acc.add(e.advanceAmount).add(e.weeklyPaymentDone).add(e.excessBalance)
-        }
-        val balanceExpenses = expenses.fold(BigDecimal.ZERO) { acc, e -> acc.add(e.balanceExpenses()) }
-        paymentsMade.subtract(balanceExpenses)
+    val broughtForward: StateFlow<BigDecimal> = allExpenses
+        .map { it.balanceBroughtForward(LocalDate.now().with(DayOfWeek.MONDAY)) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
+
+    /** Cash balance brought forward into the start of the selected Reports [dateRange]. */
+    val periodBroughtForward: StateFlow<BigDecimal> = combine(_dateRange, allExpenses) { range, expenses ->
+        expenses.balanceBroughtForward(getStartDate(range))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     /** All-time pesticide / fertilizer purchases with paid status. */

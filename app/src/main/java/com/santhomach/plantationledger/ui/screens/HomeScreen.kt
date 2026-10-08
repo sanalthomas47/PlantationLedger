@@ -124,6 +124,7 @@ fun HomeScreen(
     onNavigateToSearch: () -> Unit = {},
     onNavigateToExpenseTypeSummary: () -> Unit = {},
     onNavigateToVendorLedger: () -> Unit = {},
+    onNavigateToWeeklyBalance: () -> Unit = {},
     viewModel: ReportsViewModel? = null
 ) {
     if (LocalInspectionMode.current && viewModel == null) {
@@ -150,7 +151,7 @@ fun HomeScreen(
     val weekSummary by actualViewModel.weekSummary.collectAsState()
     val yearSummary by actualViewModel.yearSummary.collectAsState()
     val allTimeSummary by actualViewModel.allTimeSummary.collectAsState()
-    val previousWeekCarryover by actualViewModel.previousWeekCarryover.collectAsState()
+    val broughtForward by actualViewModel.broughtForward.collectAsState()
     val vendorLedger by actualViewModel.vendorLedger.collectAsState()
     val uiState by actualViewModel.uiState.collectAsState()
 
@@ -242,7 +243,7 @@ fun HomeScreen(
         weekSummary = weekSummary,
         yearSummary = yearSummary,
         allTimeSummary = allTimeSummary,
-        previousWeekCarryover = previousWeekCarryover,
+        broughtForward = broughtForward,
         vendorLedger = vendorLedger,
         snackbarHostState = snackbarHostState,
         onNavigateToExpenseEntry = onNavigateToExpenseEntry,
@@ -258,7 +259,8 @@ fun HomeScreen(
             selectedExpense = it
         },
         onLongPressExpense = { expenseToClone = it },
-        onNavigateToVendorLedger = onNavigateToVendorLedger
+        onNavigateToVendorLedger = onNavigateToVendorLedger,
+        onNavigateToWeeklyBalance = onNavigateToWeeklyBalance
     )
 }
 
@@ -270,7 +272,7 @@ fun HomeScreenContent(
     weekSummary: ExpenseSummary,
     yearSummary: ExpenseSummary,
     allTimeSummary: ExpenseSummary,
-    previousWeekCarryover: BigDecimal = BigDecimal.ZERO,
+    broughtForward: BigDecimal = BigDecimal.ZERO,
     vendorLedger: VendorLedger = VendorLedger(),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onNavigateToExpenseEntry: (LocalDate, Int?) -> Unit,
@@ -283,7 +285,8 @@ fun HomeScreenContent(
     onShowDatePicker: () -> Unit = {},
     onViewExpense: (DailyExpense) -> Unit = {},
     onLongPressExpense: (DailyExpense) -> Unit = {},
-    onNavigateToVendorLedger: () -> Unit = {}
+    onNavigateToVendorLedger: () -> Unit = {},
+    onNavigateToWeeklyBalance: () -> Unit = {}
 ) {
     // Group expenses by "yyyy-MM", newest month first: Triple(key, "MMMM yyyy", expenses)
     val groupedExpenses = remember(recentExpenses) {
@@ -365,7 +368,8 @@ fun HomeScreenContent(
                         weekSummary = weekSummary,
                         yearSummary = yearSummary,
                         allTimeSummary = allTimeSummary,
-                        previousWeekCarryover = previousWeekCarryover
+                        broughtForward = broughtForward,
+                        onOpenWeeklyBalance = onNavigateToWeeklyBalance
                     )
                 }
 
@@ -453,7 +457,8 @@ private fun PerformanceHeroCard(
     weekSummary: ExpenseSummary,
     yearSummary: ExpenseSummary,
     allTimeSummary: ExpenseSummary,
-    previousWeekCarryover: BigDecimal = BigDecimal.ZERO
+    broughtForward: BigDecimal = BigDecimal.ZERO,
+    onOpenWeeklyBalance: () -> Unit = {}
 ) {
     // Pesticide / fertilizer bills are managed in the Vendor Ledger, so neither the purchases
     // nor the payments to vendors take part in the weekly excess / short balance.
@@ -464,7 +469,7 @@ private fun PerformanceHeroCard(
     val weekPayments = weekSummary.totalAdvanceAmount
         .add(weekSummary.totalWeeklyPayment)
         .add(weekSummary.totalExcessBalance)
-    val weekBalance = weekPayments.subtract(weekExpenses).add(previousWeekCarryover)
+    val weekBalance = weekPayments.subtract(weekExpenses).add(broughtForward)
 
     val yearExpenses = yearSummary.totalLaborCost
         .add(yearSummary.totalOvertimeCost)
@@ -497,6 +502,33 @@ private fun PerformanceHeroCard(
                 )
             }
             SummaryLine("THIS WEEK", weekSummary.totalIncome, weekExpenses, balance = weekBalance)
+            // The balance above includes everything carried in from earlier weeks.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onOpenWeeklyBalance)
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val carried = when (broughtForward.signum()) {
+                    1 -> "Brought forward: Excess ₹${broughtForward.stripTrailingZeros().toPlainString()}"
+                    -1 -> "Brought forward: Short ₹${broughtForward.abs().stripTrailingZeros().toPlainString()}"
+                    else -> "Nothing brought forward"
+                }
+                Text(
+                    text = carried,
+                    color = Color.White.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    text = "Weekly balance ›",
+                    color = HeroAccent,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
             HorizontalDivider(thickness = 0.5.dp, color = Color.White.copy(alpha = 0.15f))
             SummaryLine("THIS YEAR", yearSummary.totalIncome, yearExpenses, showEfficiency = true)
             HorizontalDivider(thickness = 0.5.dp, color = Color.White.copy(alpha = 0.15f))

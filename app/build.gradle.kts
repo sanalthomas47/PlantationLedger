@@ -92,3 +92,10 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+// Lets CashBalanceTest run over a real export: gradlew testDebugUnitTest -Dplantation.export=<file>
+tasks.withType<Test>().configureEach {
+    listOf("plantation.export", "plantation.today").forEach { key ->
+        System.getProperty(key)?.let { systemProperty(key, it) }
+    }
+}

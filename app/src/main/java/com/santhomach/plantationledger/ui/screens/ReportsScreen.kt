@@ -101,6 +101,7 @@ fun ReportsScreen(
     val dailySummary by viewModel.dailySummary.collectAsState()
     val weeklySummary by viewModel.weeklySummary.collectAsState()
     val filteredExpenses by viewModel.filteredExpenses.collectAsState()
+    val periodBroughtForward by viewModel.periodBroughtForward.collectAsState()
 
     var showDateRangePicker by remember { mutableStateOf(false) }
 
@@ -260,7 +261,7 @@ fun ReportsScreen(
                         SummaryRow("Total Advance Paid", "₹${dailySummary.totalAdvanceAmount}", icon = Icons.Default.Payments)
                         SummaryRow("Weekly Payment Done", "₹${dailySummary.totalWeeklyPayment}", icon = Icons.Default.DoneAll)
                         SummaryRow("Total Other Expenses", "₹${dailySummary.totalOtherExpenses}", icon = Icons.Default.ShoppingBag)
-                        SummaryRow("Previous Excess Balance", "₹${dailySummary.totalExcessBalance}", icon = Icons.Default.AccountBalanceWallet)
+                        BroughtForwardRow(periodBroughtForward)
 
                         val totalExpenses = dailySummary.totalLaborCost
                             .add(dailySummary.totalOvertimeCost)
@@ -276,8 +277,8 @@ fun ReportsScreen(
                         val offset = weekExpenses.subtract(weekPayments)
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true)
-                        SummaryRow("TOTAL OFFSET (EXPENSES - PAYMENTS)", "₹$offset", isTotal = true)
+                        SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true, valueColor = MaterialTheme.colorScheme.onSurface)
+                        OffsetRow(offset)
                         OffsetNote()
                         SummaryRow("TOTAL INCOME", "₹${dailySummary.totalIncome}", isTotal = true)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -303,7 +304,7 @@ fun ReportsScreen(
                         SummaryRow("Total Advance Paid", "₹${weeklySummary.totalAdvanceAmount}", icon = Icons.Default.Payments)
                         SummaryRow("Weekly Payment Done", "₹${weeklySummary.totalWeeklyPayment}", icon = Icons.Default.DoneAll)
                         SummaryRow("Total Other Expenses", "₹${weeklySummary.totalOtherExpenses}", icon = Icons.Default.ShoppingBag)
-                        SummaryRow("Previous Excess Balance", "₹${weeklySummary.totalExcessBalance}", icon = Icons.Default.AccountBalanceWallet)
+                        BroughtForwardRow(periodBroughtForward)
 
                         val totalExpenses = weeklySummary.totalLaborCost
                             .add(weeklySummary.totalOvertimeCost)
@@ -317,8 +318,8 @@ fun ReportsScreen(
                             .subtract(totalPayments)
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true)
-                        SummaryRow("TOTAL OFFSET (EXPENSES - PAYMENTS)", "₹$offset", isTotal = true)
+                        SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true, valueColor = MaterialTheme.colorScheme.onSurface)
+                        OffsetRow(offset)
                         OffsetNote()
                         SummaryRow("TOTAL INCOME", "₹${weeklySummary.totalIncome}", isTotal = true)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -802,7 +803,8 @@ private fun SummaryRow(
     value: String,
     isTotal: Boolean = false,
     icon: ImageVector? = null,
-    iconTint: Color = MaterialTheme.colorScheme.secondary
+    iconTint: Color = MaterialTheme.colorScheme.secondary,
+    valueColor: Color? = null
 ) {
     Row(
         modifier = Modifier
@@ -831,7 +833,8 @@ private fun SummaryRow(
         }
         Text(
             text = value,
-            color = if (isTotal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            color = valueColor
+                ?: if (isTotal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             style = if (isTotal) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium
         )
     }
@@ -843,5 +846,39 @@ private fun OffsetNote() {
         text = "Offset excludes pesticide/fertilizer bills (tracked in Vendor Ledger)",
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.bodySmall
+    )
+}
+
+/**
+ * Offset = expenses - payments. A positive offset means the payments did not cover the expenses
+ * (short, shown in red); a negative offset means more was paid than spent (excess, shown in green).
+ * The amount is shown without a sign; the label says which side it is on.
+ */
+@Composable
+private fun OffsetRow(offset: BigDecimal) {
+    val (label, color) = when (offset.signum()) {
+        1 -> "TOTAL OFFSET (Short)" to MaterialTheme.colorScheme.error
+        -1 -> "TOTAL OFFSET (Excess)" to MaterialTheme.colorScheme.primary
+        else -> "TOTAL OFFSET" to MaterialTheme.colorScheme.onSurface
+    }
+    SummaryRow(label, "₹${offset.abs()}", isTotal = true, valueColor = color)
+}
+
+/**
+ * Cash balance carried into the start of the selected range from all earlier days.
+ * Positive = excess (green), negative = short (red).
+ */
+@Composable
+private fun BroughtForwardRow(amount: BigDecimal) {
+    val (label, color) = when (amount.signum()) {
+        1 -> "Brought Forward (Excess)" to MaterialTheme.colorScheme.primary
+        -1 -> "Brought Forward (Short)" to MaterialTheme.colorScheme.error
+        else -> "Brought Forward" to MaterialTheme.colorScheme.onSurface
+    }
+    SummaryRow(
+        label = label,
+        value = "₹${amount.abs()}",
+        icon = Icons.Default.AccountBalanceWallet,
+        valueColor = color
     )
 }

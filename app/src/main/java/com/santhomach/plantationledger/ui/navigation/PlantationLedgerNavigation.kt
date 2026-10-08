@@ -15,6 +15,7 @@ import com.santhomach.plantationledger.ui.screens.ReportsScreen
 import com.santhomach.plantationledger.ui.screens.SearchScreen
 import com.santhomach.plantationledger.ui.screens.SettingsScreen
 import com.santhomach.plantationledger.ui.screens.VendorLedgerScreen
+import com.santhomach.plantationledger.ui.screens.WeeklyBalanceScreen
 import com.santhomach.plantationledger.ui.screens.WeeklyFundsScreen
 import com.santhomach.plantationledger.ui.screens.WorkerPaymentScreen
 import java.time.LocalDate
@@ -40,6 +41,7 @@ sealed class Screen(val route: String) {
     object ExpenseTypeSummary : Screen("expense_type_summary")
     object CsvImport : Screen("csv_import")
     object VendorLedger : Screen("vendor_ledger")
+    object WeeklyBalance : Screen("weekly_balance")
 }
 
 @Composable
@@ -61,7 +63,15 @@ fun PlantationLedgerNavigation(
                 onNavigateToWeeklyFunds = { navController.navigate(Screen.WeeklyFunds.route) },
                 onNavigateToSearch = { navController.navigate(Screen.Search.route) },
                 onNavigateToExpenseTypeSummary = { navController.navigate(Screen.ExpenseTypeSummary.route) },
-                onNavigateToVendorLedger = { navController.navigate(Screen.VendorLedger.route) }
+                onNavigateToVendorLedger = { navController.navigate(Screen.VendorLedger.route) },
+                onNavigateToWeeklyBalance = { navController.navigate(Screen.WeeklyBalance.route) }
+            )
+        }
+
+        composable(Screen.WeeklyBalance.route) {
+            WeeklyBalanceScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenWeek = { start, end -> navController.navigate(Screen.Reports.createRoute(start, end)) }
             )
         }
 
