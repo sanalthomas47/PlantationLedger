@@ -6,12 +6,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.santhomach.plantationledger.ui.calculator.CalculatorViewModel
+import com.santhomach.plantationledger.ui.calculator.FloatingCalculator
 import com.santhomach.plantationledger.ui.navigation.PlantationLedgerNavigation
 import com.santhomach.plantationledger.ui.theme.PlantationLedgerTheme
 import com.santhomach.plantationledger.ui.viewmodel.SettingsViewModel
@@ -22,6 +25,9 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val settingsViewModel: SettingsViewModel by viewModels()
+
+    /** Activity-scoped: the calculator keeps its history while the app runs, and resets when it is closed. */
+    private val calculatorViewModel: CalculatorViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +45,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PlantationLedgerNavigation()
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        PlantationLedgerNavigation()
+                        // Floats above every main screen; dialogs open on top of it.
+                        FloatingCalculator(viewModel = calculatorViewModel)
+                    }
                 }
             }
         }
