@@ -182,16 +182,6 @@ class CsvImportViewModel @Inject constructor(
                         val incomeEntriesList = mutableListOf<IncomeEntry>()
                         val advanceEntriesList = mutableListOf<AdvanceEntry>()
 
-                        // Legacy per-type counters kept for older reports
-                        var malayaliMaleCount = 0
-                        var malayaliMaleWage = BigDecimal.ZERO
-                        var bengaliMaleCount = 0
-                        var bengaliMaleWage = BigDecimal.ZERO
-                        var malayaliFemaleCount = 0
-                        var malayaliFemaleWage = BigDecimal.ZERO
-                        var bengaliFemaleCount = 0
-                        var bengaliFemaleWage = BigDecimal.ZERO
-
                         rows.forEach { row ->
                             when (row.type) {
                                 "LABOR" -> {
@@ -212,24 +202,6 @@ class CsvImportViewModel @Inject constructor(
                                             taskPerformed = row.notes
                                         )
                                     )
-                                    when (row.category.lowercase(Locale.getDefault()).trim()) {
-                                        "malayali male" -> {
-                                            malayaliMaleCount += row.count
-                                            if (wage > BigDecimal.ZERO) malayaliMaleWage = wage
-                                        }
-                                        "bengali male" -> {
-                                            bengaliMaleCount += row.count
-                                            if (wage > BigDecimal.ZERO) bengaliMaleWage = wage
-                                        }
-                                        "malayali female" -> {
-                                            malayaliFemaleCount += row.count
-                                            if (wage > BigDecimal.ZERO) malayaliFemaleWage = wage
-                                        }
-                                        "bengali female" -> {
-                                            bengaliFemaleCount += row.count
-                                            if (wage > BigDecimal.ZERO) bengaliFemaleWage = wage
-                                        }
-                                    }
                                 }
 
                                 "EXPENSE" -> {
@@ -283,14 +255,8 @@ class CsvImportViewModel @Inject constructor(
 
                         val expense = DailyExpense(
                             date = dateStr,
-                            malayaliMaleCount = malayaliMaleCount,
-                            bengaliMaleCount = bengaliMaleCount,
-                            malayaliFemaleCount = malayaliFemaleCount,
-                            bengaliFemaleCount = bengaliFemaleCount,
-                            malayaliMaleWagePerDay = malayaliMaleWage,
-                            bengaliMaleWagePerDay = bengaliMaleWage,
-                            malayaliFemaleWagePerDay = malayaliFemaleWage,
-                            bengaliFemaleWagePerDay = bengaliFemaleWage,
+                            // Labour is stored only as worker groups. Also filling the legacy
+                            // per-type count fields made every later edit count it twice.
                             totalLaborCost = totalLaborCost,
                             otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), otherExpensesList),
                             totalOtherExpensesCost = totalOtherExpenses,

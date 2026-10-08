@@ -651,13 +651,19 @@ class DailyExpenseViewModel @Inject constructor(
     // ---------------------------------------------------------------------------------------------
 
     fun saveExpense() {
+        // Ignore a second tap while a save is still running.
+        if (_uiState.value.isSaving) return
+        _uiState.update { it.copy(isSaving = true, error = null) }
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(isSaving = true, error = null) }
                 val expense = _currentExpense.value ?: throw IllegalStateException("No expense to save")
 
                 val id: Long = if (expense.id == 0) {
                     val newId = repository.insertDailyExpense(expense)
+                    // Remember the new record's id so the next save updates it instead of inserting again.
+                    _currentExpense.update { current ->
+                        if (current != null && current.id == 0) current.copy(id = newId.toInt()) else current
+                    }
                     dailyBackupManager.maybeBackup()
                     newId
                 } else {
