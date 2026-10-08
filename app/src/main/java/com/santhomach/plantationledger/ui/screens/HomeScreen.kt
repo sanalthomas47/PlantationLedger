@@ -910,8 +910,8 @@ private fun EmptyStateCard(onClick: () -> Unit) {
 // Vendor outstanding
 // ---------------------------------------------------------------------------------------------
 
-private val VendorPaidGreen = Color(0xFF2E7D32)
-private val VendorPaidText = Color(0xFF1B5E20)
+private val VendorPaidGreen = Color(0xFF20B720)
+private val VendorPaidText = Color(0xFFE7EFE7)
 private val VendorDueRed = Color(0xFFB71C1C)
 
 @Composable
