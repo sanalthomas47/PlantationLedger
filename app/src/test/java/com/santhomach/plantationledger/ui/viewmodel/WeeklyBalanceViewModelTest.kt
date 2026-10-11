@@ -30,9 +30,12 @@ class WeeklyBalanceViewModelTest {
         val repository: ExpenseRepository = mockk(relaxed = true)
         every { repository.getDailyExpensesByDateRangeFlow(any(), any()) } returns flowOf(
             listOf(
-                dailyExpense(monday.minusWeeks(3).toString(), groups = listOf(group("M", 1, 1_000)), settlement = 1_000), // balanced
-                dailyExpense(monday.minusWeeks(2).toString(), groups = listOf(group("M", 1, 1_000)), settlement = 1_800), // +800
-                dailyExpense(monday.minusWeeks(1).toString(), groups = listOf(group("M", 1, 1_605)), settlement = 1_000), // -605
+                dailyExpense(monday.minusWeeks(3).toString(),
+                    groups = listOf(group("M", 1, 1_000)), settlement = 1_000), // balanced
+                dailyExpense(monday.minusWeeks(2).toString(),
+                    groups = listOf(group("M", 1, 1_000)), settlement = 1_800), // +800
+                dailyExpense(monday.minusWeeks(1).toString(),
+                    groups = listOf(group("M", 1, 1_605)), settlement = 1_000), // -605
                 dailyExpense(monday.toString(), groups = listOf(group("M", 1, 4_000)))                                     // this week
             )
         )
