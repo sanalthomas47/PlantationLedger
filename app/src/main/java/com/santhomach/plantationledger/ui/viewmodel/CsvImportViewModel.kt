@@ -79,15 +79,16 @@ class CsvImportViewModel @Inject constructor(
     fun saveTemplate() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
+                val dir =
+                    context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: context.filesDir
                 val file = File(dir, "plantation_ledger_template.csv")
                 file.writeText(
                     "date,type,category,count,rate,amount,notes\n" +
-                        "2023-01-15,LABOR,Malayali Male,5,500,,Weeding\n" +
-                        "2023-01-15,LABOR,Bengali Male,3,500,,Weeding\n" +
-                        "2023-01-15,EXPENSE,Fertilizers,,,2500,NPK 50kg\n" +
-                        "2023-01-15,INCOME,Cardamom Sales,,,15000,30kg at 500/kg\n" +
-                        "2023-01-15,ADVANCE,Rajan,,,500,weekly advance\n"
+                            "2023-01-15,LABOR,Malayali Male,5,500,,Weeding\n" +
+                            "2023-01-15,LABOR,Bengali Male,3,500,,Weeding\n" +
+                            "2023-01-15,EXPENSE,Fertilizers,,,2500,NPK 50kg\n" +
+                            "2023-01-15,INCOME,Cardamom Sales,,,15000,30kg at 500/kg\n" +
+                            "2023-01-15,ADVANCE,Rajan,,,500,weekly advance\n"
                 )
                 _uiState.update { it.copy(templateSaved = true, templatePath = file.absolutePath) }
             } catch (e: Exception) {
@@ -106,7 +107,11 @@ class CsvImportViewModel @Inject constructor(
 
                 if (lines == null || lines.size < 2) {
                     _uiState.update {
-                        it.copy(isLoading = false, isDone = true, errors = listOf("File is empty or missing header row"))
+                        it.copy(
+                            isLoading = false,
+                            isDone = true,
+                            errors = listOf("File is empty or missing header row")
+                        )
                     }
                     return@launch
                 }
@@ -156,7 +161,18 @@ class CsvImportViewModel @Inject constructor(
                             )
                             return@forEachIndexed
                         }
-                        validRows.add(CsvRow(dateStr, type, category, count, rate, amount, notes, lineNumber))
+                        validRows.add(
+                            CsvRow(
+                                dateStr,
+                                type,
+                                category,
+                                count,
+                                rate,
+                                amount,
+                                notes,
+                                lineNumber
+                            )
+                        )
                     } catch (e: Exception) {
                         parseErrors.add("Line $lineNumber: invalid date '$dateStr' - use YYYY-MM-DD, skipped")
                     }
@@ -189,10 +205,15 @@ class CsvImportViewModel @Inject constructor(
                                     val wage = when {
                                         row.rate > BigDecimal.ZERO -> row.rate
                                         row.count > 0 && row.amount > BigDecimal.ZERO ->
-                                            row.amount.divide(BigDecimal.valueOf(row.count.toLong()), RoundingMode.HALF_UP)
+                                            row.amount.divide(
+                                                BigDecimal.valueOf(row.count.toLong()),
+                                                RoundingMode.HALF_UP
+                                            )
+
                                         else -> workerType?.dailyBasicWage ?: BigDecimal.ZERO
                                     }
-                                    totalLaborCost = totalLaborCost.add(wage.multiply(BigDecimal.valueOf(row.count.toLong())))
+                                    totalLaborCost =
+                                        totalLaborCost.add(wage.multiply(BigDecimal.valueOf(row.count.toLong())))
                                     workerGroupsList.add(
                                         WorkerGroupEntry(
                                             workerTypeId = workerType?.id ?: 0,
@@ -206,8 +227,12 @@ class CsvImportViewModel @Inject constructor(
 
                                 "EXPENSE" -> {
                                     val expenseType = expenseTypes[row.category] ?: run {
-                                        val newId = repository.insertExpenseType(ExpenseType(typeName = row.category))
-                                        ExpenseType(id = newId.toInt(), typeName = row.category).also {
+                                        val newId =
+                                            repository.insertExpenseType(ExpenseType(typeName = row.category))
+                                        ExpenseType(
+                                            id = newId.toInt(),
+                                            typeName = row.category
+                                        ).also {
                                             expenseTypes[row.category] = it
                                         }
                                     }
@@ -224,8 +249,12 @@ class CsvImportViewModel @Inject constructor(
 
                                 "INCOME" -> {
                                     val incomeType = incomeTypes[row.category] ?: run {
-                                        val newId = repository.insertIncomeType(IncomeType(typeName = row.category))
-                                        IncomeType(id = newId.toInt(), typeName = row.category).also {
+                                        val newId =
+                                            repository.insertIncomeType(IncomeType(typeName = row.category))
+                                        IncomeType(
+                                            id = newId.toInt(),
+                                            typeName = row.category
+                                        ).also {
                                             incomeTypes[row.category] = it
                                         }
                                     }
@@ -258,13 +287,25 @@ class CsvImportViewModel @Inject constructor(
                             // Labour is stored only as worker groups. Also filling the legacy
                             // per-type count fields made every later edit count it twice.
                             totalLaborCost = totalLaborCost,
-                            otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), otherExpensesList),
+                            otherExpenses = Json.encodeToString(
+                                ListSerializer(OtherExpenseEntry.serializer()),
+                                otherExpensesList
+                            ),
                             totalOtherExpensesCost = totalOtherExpenses,
-                            incomeEntries = Json.encodeToString(ListSerializer(IncomeEntry.serializer()), incomeEntriesList),
+                            incomeEntries = Json.encodeToString(
+                                ListSerializer(IncomeEntry.serializer()),
+                                incomeEntriesList
+                            ),
                             totalIncome = totalIncome,
                             advanceAmount = advanceAmount,
-                            workerGroups = Json.encodeToString(ListSerializer(WorkerGroupEntry.serializer()), workerGroupsList),
-                            advanceEntries = Json.encodeToString(ListSerializer(AdvanceEntry.serializer()), advanceEntriesList),
+                            workerGroups = Json.encodeToString(
+                                ListSerializer(WorkerGroupEntry.serializer()),
+                                workerGroupsList
+                            ),
+                            advanceEntries = Json.encodeToString(
+                                ListSerializer(AdvanceEntry.serializer()),
+                                advanceEntriesList
+                            ),
                             expenseAdditionType = "import"
                         )
                         repository.insertDailyExpense(expense)
@@ -275,7 +316,11 @@ class CsvImportViewModel @Inject constructor(
                     }
                     processed += rows.size
                     _uiState.update {
-                        it.copy(progress = processed, importedCount = imported, skippedCount = skipped)
+                        it.copy(
+                            progress = processed,
+                            importedCount = imported,
+                            skippedCount = skipped
+                        )
                     }
                 }
 
@@ -290,7 +335,11 @@ class CsvImportViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoading = false, isDone = true, errors = listOf("Import failed: ${e.message}"))
+                    it.copy(
+                        isLoading = false,
+                        isDone = true,
+                        errors = listOf("Import failed: ${e.message}")
+                    )
                 }
             }
         }
@@ -310,6 +359,7 @@ class CsvImportViewModel @Inject constructor(
                     result.add(current.toString())
                     current.clear()
                 }
+
                 else -> current.append(ch)
             }
         }

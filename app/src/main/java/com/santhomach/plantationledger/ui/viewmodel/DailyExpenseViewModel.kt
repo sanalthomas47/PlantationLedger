@@ -81,8 +81,9 @@ class DailyExpenseViewModel @Inject constructor(
     val expenseTypes: StateFlow<List<ExpenseType>> = repository.getAllActiveExpenseTypesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val expenseSubtypes: StateFlow<List<ExpenseSubtype>> = repository.getAllActiveExpenseSubtypesFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val expenseSubtypes: StateFlow<List<ExpenseSubtype>> =
+        repository.getAllActiveExpenseSubtypesFlow()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val incomeTypes: StateFlow<List<IncomeType>> = repository.getAllActiveIncomeTypesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -90,8 +91,9 @@ class DailyExpenseViewModel @Inject constructor(
     val workerTypes: StateFlow<List<WorkerType>> = repository.getAllActiveWorkerTypesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val permanentWorkers: StateFlow<List<PermanentWorker>> = repository.getAllActivePermanentWorkersFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val permanentWorkers: StateFlow<List<PermanentWorker>> =
+        repository.getAllActivePermanentWorkersFlow()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val workTasks: StateFlow<List<WorkTask>> = repository.getAllActiveWorkTasksFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -110,7 +112,8 @@ class DailyExpenseViewModel @Inject constructor(
                 } catch (e: Exception) {
                     LocalDate.now()
                 }
-                val startStr = expenseDate.with(DayOfWeek.MONDAY).format(DateTimeFormatter.ISO_LOCAL_DATE)
+                val startStr =
+                    expenseDate.with(DayOfWeek.MONDAY).format(DateTimeFormatter.ISO_LOCAL_DATE)
                 flow {
                     emit(repository.getDailyExpensesBeforeDate(startStr).balanceTotal())
                 }
@@ -209,7 +212,9 @@ class DailyExpenseViewModel @Inject constructor(
         _currentExpense.update { expense ->
             expense?.let {
                 val groups = parseWorkerGroups(it.workerGroups)
-                val workerTypeName = workerTypes.value.find { t -> t.id == workerTypeId }?.workerTypeName ?: "Unknown"
+                val workerTypeName =
+                    workerTypes.value.find { t -> t.id == workerTypeId }?.workerTypeName
+                        ?: "Unknown"
                 val updated = groups + WorkerGroupEntry(
                     workerTypeId = workerTypeId,
                     workerTypeName = workerTypeName,
@@ -220,7 +225,12 @@ class DailyExpenseViewModel @Inject constructor(
                     taskPerformed = task,
                     comments = comments
                 )
-                it.copy(workerGroups = Json.encodeToString(ListSerializer(WorkerGroupEntry.serializer()), updated))
+                it.copy(
+                    workerGroups = Json.encodeToString(
+                        ListSerializer(WorkerGroupEntry.serializer()),
+                        updated
+                    )
+                )
             }
         }
         recalculateTotals()
@@ -232,7 +242,12 @@ class DailyExpenseViewModel @Inject constructor(
                 val groups = parseWorkerGroups(it.workerGroups)
                 if (index in groups.indices) {
                     val updated = groups.toMutableList().apply { removeAt(index) }
-                    it.copy(workerGroups = Json.encodeToString(ListSerializer(WorkerGroupEntry.serializer()), updated))
+                    it.copy(
+                        workerGroups = Json.encodeToString(
+                            ListSerializer(WorkerGroupEntry.serializer()),
+                            updated
+                        )
+                    )
                 } else {
                     it
                 }
@@ -255,7 +270,9 @@ class DailyExpenseViewModel @Inject constructor(
             expense?.let {
                 val groups = parseWorkerGroups(it.workerGroups).toMutableList()
                 if (index in groups.indices) {
-                    val workerTypeName = workerTypes.value.find { t -> t.id == workerTypeId }?.workerTypeName ?: "Unknown"
+                    val workerTypeName =
+                        workerTypes.value.find { t -> t.id == workerTypeId }?.workerTypeName
+                            ?: "Unknown"
                     groups[index] = WorkerGroupEntry(
                         workerTypeId = workerTypeId,
                         workerTypeName = workerTypeName,
@@ -266,7 +283,12 @@ class DailyExpenseViewModel @Inject constructor(
                         taskPerformed = task,
                         comments = comments
                     )
-                    it.copy(workerGroups = Json.encodeToString(ListSerializer(WorkerGroupEntry.serializer()), groups))
+                    it.copy(
+                        workerGroups = Json.encodeToString(
+                            ListSerializer(WorkerGroupEntry.serializer()),
+                            groups
+                        )
+                    )
                 } else {
                     it
                 }
@@ -297,11 +319,13 @@ class DailyExpenseViewModel @Inject constructor(
         val finalTypeId: Int
         val finalTypeName: String
         if (customTypeName != null) {
-            finalTypeId = repository.insertExpenseType(ExpenseType(typeName = customTypeName)).toInt()
+            finalTypeId =
+                repository.insertExpenseType(ExpenseType(typeName = customTypeName)).toInt()
             finalTypeName = customTypeName
         } else {
             finalTypeId = expenseTypeId
-            finalTypeName = expenseTypes.value.find { it.id == expenseTypeId }?.typeName ?: "Unknown"
+            finalTypeName =
+                expenseTypes.value.find { it.id == expenseTypeId }?.typeName ?: "Unknown"
         }
 
         if (customSubtypeName != null) {
@@ -327,7 +351,11 @@ class DailyExpenseViewModel @Inject constructor(
         receiptImagePath: String? = null
     ) {
         viewModelScope.launch {
-            val (finalTypeId, finalTypeName) = resolveExpenseType(expenseTypeId, customTypeName, customSubtypeName)
+            val (finalTypeId, finalTypeName) = resolveExpenseType(
+                expenseTypeId,
+                customTypeName,
+                customSubtypeName
+            )
             _currentExpense.update { expense ->
                 expense?.let {
                     val updated = parseOtherExpenses(it.otherExpenses) + OtherExpenseEntry(
@@ -340,7 +368,10 @@ class DailyExpenseViewModel @Inject constructor(
                         receiptImagePath = receiptImagePath
                     )
                     it.copy(
-                        otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), updated),
+                        otherExpenses = Json.encodeToString(
+                            ListSerializer(OtherExpenseEntry.serializer()),
+                            updated
+                        ),
                         totalOtherExpensesCost = updated.sumOf { e -> e.amount }
                     )
                 }
@@ -356,7 +387,10 @@ class DailyExpenseViewModel @Inject constructor(
                 if (index in entries.indices) {
                     val updated = entries.toMutableList().apply { removeAt(index) }
                     it.copy(
-                        otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), updated),
+                        otherExpenses = Json.encodeToString(
+                            ListSerializer(OtherExpenseEntry.serializer()),
+                            updated
+                        ),
                         totalOtherExpensesCost = updated.sumOf { e -> e.amount }
                     )
                 } else {
@@ -378,7 +412,11 @@ class DailyExpenseViewModel @Inject constructor(
         receiptImagePath: String?
     ) {
         viewModelScope.launch {
-            val (finalTypeId, finalTypeName) = resolveExpenseType(expenseTypeId, customTypeName, customSubtypeName)
+            val (finalTypeId, finalTypeName) = resolveExpenseType(
+                expenseTypeId,
+                customTypeName,
+                customSubtypeName
+            )
             _currentExpense.update { expense ->
                 expense?.let {
                     val entries = parseOtherExpenses(it.otherExpenses).toMutableList()
@@ -393,7 +431,10 @@ class DailyExpenseViewModel @Inject constructor(
                             receiptImagePath = receiptImagePath ?: entries[index].receiptImagePath
                         )
                         it.copy(
-                            otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), entries),
+                            otherExpenses = Json.encodeToString(
+                                ListSerializer(OtherExpenseEntry.serializer()),
+                                entries
+                            ),
                             totalOtherExpensesCost = entries.sumOf { e -> e.amount }
                         )
                     } else {
@@ -409,11 +450,16 @@ class DailyExpenseViewModel @Inject constructor(
     // Income
     // ---------------------------------------------------------------------------------------------
 
-    private suspend fun resolveIncomeType(incomeTypeId: Int, customTypeName: String?): Pair<Int, String> {
+    private suspend fun resolveIncomeType(
+        incomeTypeId: Int,
+        customTypeName: String?
+    ): Pair<Int, String> {
         return if (customTypeName != null) {
-            repository.insertIncomeType(IncomeType(typeName = customTypeName)).toInt() to customTypeName
+            repository.insertIncomeType(IncomeType(typeName = customTypeName))
+                .toInt() to customTypeName
         } else {
-            incomeTypeId to (incomeTypes.value.find { it.id == incomeTypeId }?.typeName ?: "Unknown")
+            incomeTypeId to (incomeTypes.value.find { it.id == incomeTypeId }?.typeName
+                ?: "Unknown")
         }
     }
 
@@ -440,7 +486,10 @@ class DailyExpenseViewModel @Inject constructor(
                         notes = notes
                     )
                     it.copy(
-                        incomeEntries = Json.encodeToString(ListSerializer(IncomeEntry.serializer()), updated),
+                        incomeEntries = Json.encodeToString(
+                            ListSerializer(IncomeEntry.serializer()),
+                            updated
+                        ),
                         totalIncome = updated.sumOf { e -> e.amount }
                     )
                 }
@@ -456,7 +505,10 @@ class DailyExpenseViewModel @Inject constructor(
                 if (index in entries.indices) {
                     val updated = entries.toMutableList().apply { removeAt(index) }
                     it.copy(
-                        incomeEntries = Json.encodeToString(ListSerializer(IncomeEntry.serializer()), updated),
+                        incomeEntries = Json.encodeToString(
+                            ListSerializer(IncomeEntry.serializer()),
+                            updated
+                        ),
                         totalIncome = updated.sumOf { e -> e.amount }
                     )
                 } else {
@@ -493,7 +545,10 @@ class DailyExpenseViewModel @Inject constructor(
                             notes = notes
                         )
                         it.copy(
-                            incomeEntries = Json.encodeToString(ListSerializer(IncomeEntry.serializer()), entries),
+                            incomeEntries = Json.encodeToString(
+                                ListSerializer(IncomeEntry.serializer()),
+                                entries
+                            ),
                             totalIncome = entries.sumOf { e -> e.amount }
                         )
                     } else {
@@ -541,10 +596,13 @@ class DailyExpenseViewModel @Inject constructor(
         _currentExpense.update { expense ->
             expense?.let {
                 val updated = parseAdvanceEntries(it.advanceEntries) +
-                    AdvanceEntry(amount = amount, reason = reason, recipientName = recipient)
+                        AdvanceEntry(amount = amount, reason = reason, recipientName = recipient)
                 it.copy(
                     advanceAmount = updated.sumOf { e -> e.amount },
-                    advanceEntries = Json.encodeToString(ListSerializer(AdvanceEntry.serializer()), updated)
+                    advanceEntries = Json.encodeToString(
+                        ListSerializer(AdvanceEntry.serializer()),
+                        updated
+                    )
                 )
             }
         }
@@ -558,7 +616,10 @@ class DailyExpenseViewModel @Inject constructor(
                     val updated = entries.toMutableList().apply { removeAt(index) }
                     it.copy(
                         advanceAmount = updated.sumOf { e -> e.amount },
-                        advanceEntries = Json.encodeToString(ListSerializer(AdvanceEntry.serializer()), updated)
+                        advanceEntries = Json.encodeToString(
+                            ListSerializer(AdvanceEntry.serializer()),
+                            updated
+                        )
                     )
                 } else {
                     it
@@ -572,10 +633,14 @@ class DailyExpenseViewModel @Inject constructor(
             expense?.let {
                 val entries = parseAdvanceEntries(it.advanceEntries).toMutableList()
                 if (index in entries.indices) {
-                    entries[index] = AdvanceEntry(amount = amount, reason = reason, recipientName = recipient)
+                    entries[index] =
+                        AdvanceEntry(amount = amount, reason = reason, recipientName = recipient)
                     it.copy(
                         advanceAmount = entries.sumOf { e -> e.amount },
-                        advanceEntries = Json.encodeToString(ListSerializer(AdvanceEntry.serializer()), entries)
+                        advanceEntries = Json.encodeToString(
+                            ListSerializer(AdvanceEntry.serializer()),
+                            entries
+                        )
                     )
                 } else {
                     it
@@ -615,20 +680,22 @@ class DailyExpenseViewModel @Inject constructor(
         }
 
     private fun calculateLaborCost(expense: DailyExpense): BigDecimal {
-        val legacy = expense.malayaliMaleWagePerDay.multiply(BigDecimal.valueOf(expense.malayaliMaleCount.toLong()))
-            .add(expense.bengaliMaleWagePerDay.multiply(BigDecimal.valueOf(expense.bengaliMaleCount.toLong())))
-            .add(expense.malayaliFemaleWagePerDay.multiply(BigDecimal.valueOf(expense.malayaliFemaleCount.toLong())))
-            .add(expense.bengaliFemaleWagePerDay.multiply(BigDecimal.valueOf(expense.bengaliFemaleCount.toLong())))
+        val legacy =
+            expense.malayaliMaleWagePerDay.multiply(BigDecimal.valueOf(expense.malayaliMaleCount.toLong()))
+                .add(expense.bengaliMaleWagePerDay.multiply(BigDecimal.valueOf(expense.bengaliMaleCount.toLong())))
+                .add(expense.malayaliFemaleWagePerDay.multiply(BigDecimal.valueOf(expense.malayaliFemaleCount.toLong())))
+                .add(expense.bengaliFemaleWagePerDay.multiply(BigDecimal.valueOf(expense.bengaliFemaleCount.toLong())))
         return legacy.add(calculateTotalLaborFromGroups(parseWorkerGroups(expense.workerGroups)))
     }
 
     private fun calculateOvertimeCost(expense: DailyExpense): BigDecimal {
-        val groupOvertime = calculateTotalOvertimeFromGroups(parseWorkerGroups(expense.workerGroups))
+        val groupOvertime =
+            calculateTotalOvertimeFromGroups(parseWorkerGroups(expense.workerGroups))
 
         // Legacy overtime: 1.5x the average daily wage per hour
         val totalWorkers = BigDecimal.valueOf(
             (expense.malayaliMaleCount + expense.bengaliMaleCount +
-                expense.malayaliFemaleCount + expense.bengaliFemaleCount).toLong()
+                    expense.malayaliFemaleCount + expense.bengaliFemaleCount).toLong()
         )
         val avgWage = if (totalWorkers > BigDecimal.ZERO) {
             expense.malayaliMaleWagePerDay
@@ -656,7 +723,8 @@ class DailyExpenseViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true, error = null) }
         viewModelScope.launch {
             try {
-                val expense = _currentExpense.value ?: throw IllegalStateException("No expense to save")
+                val expense =
+                    _currentExpense.value ?: throw IllegalStateException("No expense to save")
 
                 val id: Long = if (expense.id == 0) {
                     val newId = repository.insertDailyExpense(expense)
@@ -697,7 +765,8 @@ class DailyExpenseViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isDeleting = true, error = null) }
-                val expense = _currentExpense.value ?: throw IllegalStateException("No expense to delete")
+                val expense =
+                    _currentExpense.value ?: throw IllegalStateException("No expense to delete")
 
                 // Remove vendor payments linked to this day's purchases first
                 repository.getVendorPaymentsBySourceExpenseDate(expense.date).forEach { payment ->
@@ -812,6 +881,7 @@ class DailyExpenseViewModel @Inject constructor(
     }
 
     companion object {
-        private val LEGACY_VENDOR_MIGRATION_KEY = booleanPreferencesKey("legacy_vendor_migration_done")
+        private val LEGACY_VENDOR_MIGRATION_KEY =
+            booleanPreferencesKey("legacy_vendor_migration_done")
     }
 }
