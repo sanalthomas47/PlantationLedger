@@ -124,7 +124,7 @@ fun ReportsScreen(
                         }
                     },
                     enabled = dateRangePickerState.selectedStartDateMillis != null &&
-                        dateRangePickerState.selectedEndDateMillis != null
+                            dateRangePickerState.selectedEndDateMillis != null
                 ) {
                     Text("OK")
                 }
@@ -194,7 +194,10 @@ fun ReportsScreen(
                             "This Month" to DateRange.ThisMonth,
                             "Last Month" to DateRange.LastMonth,
                             "This Year" to DateRange.ThisYear,
-                            "Custom Range" to DateRange.Custom(LocalDate.now().minusDays(30), LocalDate.now())
+                            "Custom Range" to DateRange.Custom(
+                                LocalDate.now().minusDays(30),
+                                LocalDate.now()
+                            )
                         )
                         ExposedDropdownMenuBox(
                             expanded = expanded,
@@ -211,7 +214,7 @@ fun ReportsScreen(
                                 is DateRange.ThisYear -> "This Year"
                                 is DateRange.Custom ->
                                     "${range.startDate.format(DateTimeFormatter.ofPattern("dd MMM"))} - " +
-                                        range.endDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                                            range.endDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
                             }
                             OutlinedTextField(
                                 value = label,
@@ -255,12 +258,37 @@ fun ReportsScreen(
                             modifier = Modifier.padding(bottom = 8.dp),
                             style = MaterialTheme.typography.titleMedium
                         )
-                        SummaryRow("Total Income", "₹${dailySummary.totalIncome}", icon = Icons.Default.TrendingUp, iconTint = MaterialTheme.colorScheme.primary)
-                        SummaryRow("Total Labor Cost", "₹${dailySummary.totalLaborCost}", icon = Icons.Default.Groups)
-                        SummaryRow("Total Overtime Cost", "₹${dailySummary.totalOvertimeCost}", icon = Icons.Default.AccessTime)
-                        SummaryRow("Total Advance Paid", "₹${dailySummary.totalAdvanceAmount}", icon = Icons.Default.Payments)
-                        SummaryRow("Weekly Payment Done", "₹${dailySummary.totalWeeklyPayment}", icon = Icons.Default.DoneAll)
-                        SummaryRow("Total Other Expenses", "₹${dailySummary.totalOtherExpenses}", icon = Icons.Default.ShoppingBag)
+                        SummaryRow(
+                            "Total Income",
+                            "₹${dailySummary.totalIncome}",
+                            icon = Icons.Default.TrendingUp,
+                            iconTint = MaterialTheme.colorScheme.primary
+                        )
+                        SummaryRow(
+                            "Total Labor Cost",
+                            "₹${dailySummary.totalLaborCost}",
+                            icon = Icons.Default.Groups
+                        )
+                        SummaryRow(
+                            "Total Overtime Cost",
+                            "₹${dailySummary.totalOvertimeCost}",
+                            icon = Icons.Default.AccessTime
+                        )
+                        SummaryRow(
+                            "Total Advance Paid",
+                            "₹${dailySummary.totalAdvanceAmount}",
+                            icon = Icons.Default.Payments
+                        )
+                        SummaryRow(
+                            "Weekly Payment Done",
+                            "₹${dailySummary.totalWeeklyPayment}",
+                            icon = Icons.Default.DoneAll
+                        )
+                        SummaryRow(
+                            "Total Other Expenses",
+                            "₹${dailySummary.totalOtherExpenses}",
+                            icon = Icons.Default.ShoppingBag
+                        )
                         BroughtForwardRow(periodBroughtForward)
 
                         val totalExpenses = dailySummary.totalLaborCost
@@ -277,7 +305,12 @@ fun ReportsScreen(
                         val offset = weekExpenses.subtract(weekPayments)
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true, valueColor = MaterialTheme.colorScheme.onSurface)
+                        SummaryRow(
+                            "TOTAL EXPENSES",
+                            "₹$totalExpenses",
+                            isTotal = true,
+                            valueColor = MaterialTheme.colorScheme.onSurface
+                        )
                         OffsetRow(offset)
                         OffsetNote()
                         SummaryRow("TOTAL INCOME", "₹${dailySummary.totalIncome}", isTotal = true)
@@ -298,12 +331,37 @@ fun ReportsScreen(
                             modifier = Modifier.padding(bottom = 8.dp),
                             style = MaterialTheme.typography.titleMedium
                         )
-                        SummaryRow("Total Income", "₹${weeklySummary.totalIncome}", icon = Icons.Default.TrendingUp, iconTint = MaterialTheme.colorScheme.primary)
-                        SummaryRow("Total Labor Cost", "₹${weeklySummary.totalLaborCost}", icon = Icons.Default.Groups)
-                        SummaryRow("Total Overtime Cost", "₹${weeklySummary.totalOvertimeCost}", icon = Icons.Default.AccessTime)
-                        SummaryRow("Total Advance Paid", "₹${weeklySummary.totalAdvanceAmount}", icon = Icons.Default.Payments)
-                        SummaryRow("Weekly Payment Done", "₹${weeklySummary.totalWeeklyPayment}", icon = Icons.Default.DoneAll)
-                        SummaryRow("Total Other Expenses", "₹${weeklySummary.totalOtherExpenses}", icon = Icons.Default.ShoppingBag)
+                        SummaryRow(
+                            "Total Income",
+                            "₹${weeklySummary.totalIncome}",
+                            icon = Icons.Default.TrendingUp,
+                            iconTint = MaterialTheme.colorScheme.primary
+                        )
+                        SummaryRow(
+                            "Total Labor Cost",
+                            "₹${weeklySummary.totalLaborCost}",
+                            icon = Icons.Default.Groups
+                        )
+                        SummaryRow(
+                            "Total Overtime Cost",
+                            "₹${weeklySummary.totalOvertimeCost}",
+                            icon = Icons.Default.AccessTime
+                        )
+                        SummaryRow(
+                            "Total Advance Paid",
+                            "₹${weeklySummary.totalAdvanceAmount}",
+                            icon = Icons.Default.Payments
+                        )
+                        SummaryRow(
+                            "Weekly Payment Done",
+                            "₹${weeklySummary.totalWeeklyPayment}",
+                            icon = Icons.Default.DoneAll
+                        )
+                        SummaryRow(
+                            "Total Other Expenses",
+                            "₹${weeklySummary.totalOtherExpenses}",
+                            icon = Icons.Default.ShoppingBag
+                        )
                         BroughtForwardRow(periodBroughtForward)
 
                         val totalExpenses = weeklySummary.totalLaborCost
@@ -318,7 +376,12 @@ fun ReportsScreen(
                             .subtract(totalPayments)
 
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        SummaryRow("TOTAL EXPENSES", "₹$totalExpenses", isTotal = true, valueColor = MaterialTheme.colorScheme.onSurface)
+                        SummaryRow(
+                            "TOTAL EXPENSES",
+                            "₹$totalExpenses",
+                            isTotal = true,
+                            valueColor = MaterialTheme.colorScheme.onSurface
+                        )
                         OffsetRow(offset)
                         OffsetNote()
                         SummaryRow("TOTAL INCOME", "₹${weeklySummary.totalIncome}", isTotal = true)
@@ -350,7 +413,10 @@ fun ReportsScreen(
                         val hasOvertime = workers.any { it.totalOvertimeCost > BigDecimal.ZERO }
 
                         if (workers.isEmpty() && otherExpenses.isEmpty() && settlement == BigDecimal.ZERO && advances.isEmpty()) {
-                            Text("No data for this period", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "No data for this period",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         } else {
                             if (workers.isNotEmpty()) {
                                 SectionTitle("LABOR", topPadding = 8.dp)
@@ -360,9 +426,23 @@ fun ReportsScreen(
                                         .padding(bottom = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Type", modifier = Modifier.weight(2f), style = MaterialTheme.typography.labelSmall)
-                                    Text("Days", modifier = Modifier.weight(0.6f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
-                                    Text("Cost", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        "Type",
+                                        modifier = Modifier.weight(2f),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "Days",
+                                        modifier = Modifier.weight(0.6f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "Cost",
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
                                 }
                                 HorizontalDivider()
                                 workers.forEach { worker ->
@@ -373,9 +453,23 @@ fun ReportsScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(worker.workerTypeName, modifier = Modifier.weight(2f), style = MaterialTheme.typography.bodyMedium)
-                                        Text(worker.totalCount.toString(), modifier = Modifier.weight(0.6f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
-                                        Text("₹${worker.totalBaseCost}", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
+                                        Text(
+                                            worker.workerTypeName,
+                                            modifier = Modifier.weight(2f),
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            worker.totalCount.toString(),
+                                            modifier = Modifier.weight(0.6f),
+                                            textAlign = TextAlign.End,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            "₹${worker.totalBaseCost}",
+                                            modifier = Modifier.weight(1f),
+                                            textAlign = TextAlign.End,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
                                     }
                                     HorizontalDivider()
                                 }
@@ -389,9 +483,23 @@ fun ReportsScreen(
                                         .padding(bottom = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Item", modifier = Modifier.weight(2f), style = MaterialTheme.typography.labelSmall)
-                                    Text("Qty", modifier = Modifier.weight(0.6f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
-                                    Text("Amount", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        "Item",
+                                        modifier = Modifier.weight(2f),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "Qty",
+                                        modifier = Modifier.weight(0.6f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "Amount",
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
                                 }
                                 HorizontalDivider()
                                 otherExpenses.forEach { (date, entry) ->
@@ -408,23 +516,42 @@ fun ReportsScreen(
                                         .padding(bottom = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Type", modifier = Modifier.weight(2f), style = MaterialTheme.typography.labelSmall)
-                                    Text("OT Cost", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        "Type",
+                                        modifier = Modifier.weight(2f),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "OT Cost",
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
                                 }
                                 HorizontalDivider()
-                                workers.filter { it.totalOvertimeCost > BigDecimal.ZERO }.forEach { worker ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 3.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(worker.workerTypeName, modifier = Modifier.weight(2f), style = MaterialTheme.typography.bodyMedium)
-                                        Text("₹${worker.totalOvertimeCost}", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
+                                workers.filter { it.totalOvertimeCost > BigDecimal.ZERO }
+                                    .forEach { worker ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 3.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                worker.workerTypeName,
+                                                modifier = Modifier.weight(2f),
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                "₹${worker.totalOvertimeCost}",
+                                                modifier = Modifier.weight(1f),
+                                                textAlign = TextAlign.End,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
+                                        HorizontalDivider()
                                     }
-                                    HorizontalDivider()
-                                }
                             }
 
                             if (advances.isNotEmpty()) {
@@ -435,8 +562,17 @@ fun ReportsScreen(
                                         .padding(bottom = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Recipient", modifier = Modifier.weight(2f), style = MaterialTheme.typography.labelSmall)
-                                    Text("Amount", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        "Recipient",
+                                        modifier = Modifier.weight(2f),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "Amount",
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
                                 }
                                 HorizontalDivider()
                                 advances.forEach { advance ->
@@ -448,7 +584,10 @@ fun ReportsScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(modifier = Modifier.weight(2f)) {
-                                            Text(advance.recipientName, style = MaterialTheme.typography.bodyMedium)
+                                            Text(
+                                                advance.recipientName,
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
                                             if (advance.reason.isNotEmpty()) {
                                                 Text(
                                                     text = advance.reason,
@@ -457,7 +596,12 @@ fun ReportsScreen(
                                                 )
                                             }
                                         }
-                                        Text("₹${advance.totalAmount}", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
+                                        Text(
+                                            "₹${advance.totalAmount}",
+                                            modifier = Modifier.weight(1f),
+                                            textAlign = TextAlign.End,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
                                     }
                                     HorizontalDivider()
                                 }
@@ -473,7 +617,11 @@ fun ReportsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Weekly Settlement Done", modifier = Modifier.weight(2f), style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        "Weekly Settlement Done",
+                                        modifier = Modifier.weight(2f),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                     Text(
                                         text = "₹$settlement",
                                         color = MaterialTheme.colorScheme.primary,
@@ -486,9 +634,11 @@ fun ReportsScreen(
                         }
 
                         // Totals
-                        val salary = weeklySummary.totalLaborCost.add(weeklySummary.totalOvertimeCost)
+                        val salary =
+                            weeklySummary.totalLaborCost.add(weeklySummary.totalOvertimeCost)
                         val other = weeklySummary.totalOtherExpenses
-                        val payments = weeklySummary.totalAdvanceAmount.add(weeklySummary.totalWeeklyPayment)
+                        val payments =
+                            weeklySummary.totalAdvanceAmount.add(weeklySummary.totalWeeklyPayment)
                         val income = weeklySummary.totalIncome
                         HorizontalDivider(
                             modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
@@ -520,7 +670,10 @@ fun ReportsScreen(
                         )
                         val summary = viewModel.getWeeklyWorkerSummary(filteredExpenses)
                         if (summary.isEmpty()) {
-                            Text("No labor data for this period", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "No labor data for this period",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         } else {
                             Row(
                                 modifier = Modifier
@@ -528,9 +681,23 @@ fun ReportsScreen(
                                     .padding(bottom = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Type & Comment", modifier = Modifier.weight(2f), style = MaterialTheme.typography.labelSmall)
-                                Text("Count", modifier = Modifier.weight(0.5f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
-                                Text("Total Cost", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    "Type & Comment",
+                                    modifier = Modifier.weight(2f),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Text(
+                                    "Count",
+                                    modifier = Modifier.weight(0.5f),
+                                    textAlign = TextAlign.End,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Text(
+                                    "Total Cost",
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.End,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
                             }
                             HorizontalDivider()
                             summary.forEach { row ->
@@ -542,7 +709,10 @@ fun ReportsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(2f)) {
-                                        Text(row.workerType, style = MaterialTheme.typography.bodyMedium)
+                                        Text(
+                                            row.workerType,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
                                         if (row.comment.isNotEmpty()) {
                                             Text(
                                                 text = row.comment,
@@ -551,8 +721,18 @@ fun ReportsScreen(
                                             )
                                         }
                                     }
-                                    Text(row.totalCount.toString(), modifier = Modifier.weight(0.5f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
-                                    Text("₹${row.totalCost}", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        row.totalCount.toString(),
+                                        modifier = Modifier.weight(0.5f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        "₹${row.totalCost}",
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                 }
                                 if (row != summary.last()) {
                                     HorizontalDivider()
@@ -574,7 +754,10 @@ fun ReportsScreen(
                         )
                         val categories = viewModel.getTopExpenseCategories(filteredExpenses)
                         if (categories.isEmpty()) {
-                            Text("No expense data available", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "No expense data available",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         } else {
                             categories.forEach { category ->
                                 Row(
@@ -582,8 +765,15 @@ fun ReportsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(category.categoryName, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                                    Text("₹${category.totalAmount}", style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        category.categoryName,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        "₹${category.totalAmount}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
                                 }
                                 if (category != categories.last()) {
                                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -605,7 +795,10 @@ fun ReportsScreen(
                         )
                         val breakdown = viewModel.getIncomeBreakdown(filteredExpenses)
                         if (breakdown.isEmpty()) {
-                            Text("No income data available", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "No income data available",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         } else {
                             breakdown.forEach { income ->
                                 Row(
@@ -614,7 +807,10 @@ fun ReportsScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(income.commodityName, style = MaterialTheme.typography.bodyMedium)
+                                        Text(
+                                            income.commodityName,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
                                         Text(
                                             text = "Total Weight: ${income.totalWeight} kg",
                                             color = MaterialTheme.colorScheme.secondary,
@@ -664,7 +860,8 @@ fun ReportsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             val date = try {
-                                LocalDate.parse(expense.date).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                                LocalDate.parse(expense.date)
+                                    .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
                             } catch (e: Exception) {
                                 expense.date
                             }
@@ -774,8 +971,18 @@ private fun OtherExpenseSpecificRow(date: String, entry: OtherExpenseEntry) {
         } else {
             String.format("%.1f", entry.quantity)
         }
-        Text(qty, modifier = Modifier.weight(0.6f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
-        Text("₹${entry.amount}", modifier = Modifier.weight(1f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            qty,
+            modifier = Modifier.weight(0.6f),
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            "₹${entry.amount}",
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
