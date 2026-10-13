@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.temporal.TemporalAdjusters
 
 /*
@@ -106,3 +107,37 @@ fun buildWeeklyBalances(expenses: List<DailyExpense>, today: LocalDate = LocalDa
         )
     }
 }
+
+/** Totals for one year or month of the Home activity tree. */
+data class PeriodTotals(
+    val income: BigDecimal,
+    /** Labour + overtime + other expenses, including pesticide / fertilizer bills. */
+    val expenses: BigDecimal,
+    /** Advances + weekly settlements + excess balance paid. */
+    val payments: BigDecimal
+)
+
+data class MonthActivity(val month: YearMonth, val totals: PeriodTotals, val days: List<DailyExpense>)
+
+data class YearActivity(val year: Int, val totals: PeriodTotals, val months: List<MonthActivity>)
+
+/** Groups daily records into years and months with their totals. Everything is newest first. */
+fun buildActivityTree(expenses: List<DailyExpense>): List<YearActivity> {
+    val months = expenses
+        .mapNotNull { e -> runCatching { LocalDate.parse(e.date) }.getOrNull()?.let { it to e } }
+        .sortedWith(compareByDescending<Pair<LocalDate, DailyExpense>> { it.first }.thenByDescending { it.second.id })
+        .groupBy({ YearMonth.from(it.first) }, { it.second })
+        .map { (month, days) -> MonthActivity(month, totalsOf(days), days) }
+
+    return months.groupBy { it.month.year }.map { (year, yearMonths) ->
+        YearActivity(year, totalsOf(yearMonths.flatMap { it.days }), yearMonths)
+    }
+}
+
+private fun totalsOf(days: List<DailyExpense>) = PeriodTotals(
+    income = days.fold(BigDecimal.ZERO) { acc, e -> acc.add(e.totalIncome) },
+    expenses = days.fold(BigDecimal.ZERO) { acc, e ->
+        acc.add(e.totalLaborCost).add(e.totalOvertimeCost).add(e.totalOtherExpensesCost)
+    },
+    payments = days.fold(BigDecimal.ZERO) { acc, e -> acc.add(e.balancePayments()) }
+)
