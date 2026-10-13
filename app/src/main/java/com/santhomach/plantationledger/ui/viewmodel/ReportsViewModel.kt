@@ -8,6 +8,8 @@ import com.santhomach.plantationledger.data.model.IncomeEntry
 import com.santhomach.plantationledger.data.model.OtherExpenseEntry
 import com.santhomach.plantationledger.data.model.VendorPayment
 import com.santhomach.plantationledger.data.model.WorkerGroupEntry
+import com.santhomach.plantationledger.data.model.YearActivity
+import com.santhomach.plantationledger.data.model.buildActivityTree
 import com.santhomach.plantationledger.data.model.balanceBroughtForward
 import com.santhomach.plantationledger.data.model.isVendorPurchase
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
@@ -174,6 +176,11 @@ class ReportsViewModel @Inject constructor(
         .map { it.balanceBroughtForward(LocalDate.now().with(DayOfWeek.MONDAY)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
+    /** Every day grouped by year and month for the Home "Recent Activity" tree. */
+    val activityTree: StateFlow<List<YearActivity>> = allExpenses
+        .map { buildActivityTree(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     /** Cash balance brought forward into the start of the selected Reports [dateRange]. */
     val periodBroughtForward: StateFlow<BigDecimal> =
         combine(_dateRange, allExpenses) { range, expenses ->
@@ -244,11 +251,6 @@ class ReportsViewModel @Inject constructor(
 
     val recentExpenses: StateFlow<List<DailyExpense>> = repository.getRecentExpensesFlow(100)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val yearlyExpenses: StateFlow<List<DailyExpense>> = repository.getDailyExpensesByDateRangeFlow(
-        LocalDate.now().withDayOfYear(1).format(iso),
-        LocalDate.now().plusYears(10).format(iso)
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val filteredExpenses: StateFlow<List<DailyExpense>> = _dateRange
         .flatMapLatest { range ->

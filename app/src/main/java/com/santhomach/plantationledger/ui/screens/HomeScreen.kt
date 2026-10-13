@@ -73,7 +73,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,7 +87,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -95,24 +97,28 @@ import com.santhomach.plantationledger.data.model.AdvanceEntry
 import com.santhomach.plantationledger.data.model.DailyExpense
 import com.santhomach.plantationledger.data.model.IncomeEntry
 import com.santhomach.plantationledger.data.model.OtherExpenseEntry
+import com.santhomach.plantationledger.data.model.PeriodTotals
 import com.santhomach.plantationledger.data.model.VendorPayment
 import com.santhomach.plantationledger.data.model.WorkerGroupEntry
+import com.santhomach.plantationledger.data.model.YearActivity
 import com.santhomach.plantationledger.data.repository.ExpenseSummary
+import com.santhomach.plantationledger.ui.calculator.CalculatorState
 import com.santhomach.plantationledger.ui.viewmodel.ReportsViewModel
 import com.santhomach.plantationledger.ui.viewmodel.VendorLedger
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 
 /**
  * Dashboard: estate performance hero card, vendor outstanding, quick actions and the
- * month-grouped list of recent expenses (tap to view details, long-press to clone).
+ * recent expenses grouped by year and month (tap to view details, long-press to clone).
  */
 @Composable
 fun HomeScreen(
@@ -129,7 +135,7 @@ fun HomeScreen(
 ) {
     if (LocalInspectionMode.current && viewModel == null) {
         HomeScreenContent(
-            recentExpenses = emptyList(),
+            activityTree = emptyList(),
             dailySummary = ExpenseSummary(),
             weekSummary = ExpenseSummary(),
             yearSummary = ExpenseSummary(),
@@ -146,7 +152,7 @@ fun HomeScreen(
     }
     val actualViewModel: ReportsViewModel = viewModel ?: hiltViewModel()
 
-    val yearlyExpenses by actualViewModel.yearlyExpenses.collectAsState()
+    val activityTree by actualViewModel.activityTree.collectAsState()
     val dailySummary by actualViewModel.dailySummary.collectAsState()
     val weekSummary by actualViewModel.weekSummary.collectAsState()
     val yearSummary by actualViewModel.yearSummary.collectAsState()
@@ -238,7 +244,7 @@ fun HomeScreen(
     }
 
     HomeScreenContent(
-        recentExpenses = yearlyExpenses,
+        activityTree = activityTree,
         dailySummary = dailySummary,
         weekSummary = weekSummary,
         yearSummary = yearSummary,
@@ -267,7 +273,7 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenContent(
-    recentExpenses: List<DailyExpense>,
+    activityTree: List<YearActivity>,
     dailySummary: ExpenseSummary,
     weekSummary: ExpenseSummary,
     yearSummary: ExpenseSummary,
@@ -288,31 +294,9 @@ fun HomeScreenContent(
     onNavigateToVendorLedger: () -> Unit = {},
     onNavigateToWeeklyBalance: () -> Unit = {}
 ) {
-    // Group expenses by "yyyy-MM", newest month first: Triple(key, "MMMM yyyy", expenses)
-    val groupedExpenses = remember(recentExpenses) {
-        recentExpenses
-            .groupBy { expense ->
-                try {
-                    val date = LocalDate.parse(expense.date)
-                    "${date.year}-${date.monthValue.toString().padStart(2, '0')}"
-                } catch (e: Exception) {
-                    "Unknown"
-                }
-            }
-            .entries
-            .sortedByDescending { it.key }
-            .map { (key, list) ->
-                val label = try {
-                    val parts = key.split("-")
-                    LocalDate.of(parts[0].toInt(), parts[1].toInt(), 1)
-                        .format(DateTimeFormatter.ofPattern("MMMM yyyy"))
-                } catch (e: Exception) {
-                    key
-                }
-                Triple(key, label, list)
-            }
-    }
-    val expandedMonths = remember { mutableStateMapOf<String, Boolean>() }
+    // Open / closed state of each year ("2026") and month ("2026-10") the user has tapped.
+    val expanded = rememberSaveable(saver = expandedSaver) { mutableStateMapOf<String, Boolean>() }
+    val today = remember { LocalDate.now() }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -407,28 +391,49 @@ fun HomeScreenContent(
                     }
                 }
 
-                groupedExpenses.forEach { (key, label, expenses) ->
-                    val expanded = expandedMonths[key] ?: true
-                    item(key = "header_$key") {
-                        MonthGroupHeader(
-                            label = label,
-                            count = expenses.size,
-                            expanded = expanded,
-                            onToggle = { expandedMonths[key] = !expanded }
+                // Year -> month -> day cards. Only the current year and month start open.
+                activityTree.forEach { year ->
+                    val yearKey = year.year.toString()
+                    val yearOpen = expanded[yearKey] ?: (year.year == today.year)
+                    item(key = "year_$yearKey") {
+                        ActivityGroupHeader(
+                            label = yearKey,
+                            totals = year.totals,
+                            expanded = yearOpen,
+                            isYear = true,
+                            onToggle = { expanded[yearKey] = !yearOpen }
                         )
                     }
-                    if (expanded) {
-                        items(expenses, key = { it.id }) { expense ->
-                            ExpenseListCard(
-                                expense = expense,
-                                onClick = { onViewExpense(expense) },
-                                onLongClick = { onLongPressExpense(expense) }
-                            )
+                    if (yearOpen) {
+                        year.months.forEach { month ->
+                            val monthKey = month.month.toString()
+                            val monthOpen = expanded[monthKey] ?: (month.month == YearMonth.from(today))
+                            item(key = "month_$monthKey") {
+                                ActivityGroupHeader(
+                                    label = month.month.format(DateTimeFormatter.ofPattern("MMMM")),
+                                    totals = month.totals,
+                                    expanded = monthOpen,
+                                    isYear = false,
+                                    onToggle = { expanded[monthKey] = !monthOpen }
+                                )
+                            }
+                            if (monthOpen) {
+                                items(month.days, key = { it.id }) { expense ->
+                                    // Indented under the month row.
+                                    Box(modifier = Modifier.padding(start = 32.dp)) {
+                                        ExpenseListCard(
+                                            expense = expense,
+                                            onClick = { onViewExpense(expense) },
+                                            onLongClick = { onLongPressExpense(expense) }
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                if (recentExpenses.isEmpty()) {
+                if (activityTree.isEmpty()) {
                     item {
                         EmptyStateCard(onClick = { onNavigateToExpenseEntry(LocalDate.now(), null) })
                     }
@@ -724,20 +729,48 @@ private fun QuickActionButton(
 // Recent activity list
 // ---------------------------------------------------------------------------------------------
 
+/** Remembers which years / months are open across navigation and rotation. */
+private val expandedSaver = Saver<SnapshotStateMap<String, Boolean>, List<String>>(
+    save = { map -> map.map { (key, open) -> "$key=$open" } },
+    restore = { saved ->
+        mutableStateMapOf<String, Boolean>().apply {
+            saved.forEach { entry -> put(entry.substringBefore('='), entry.substringAfter('=').toBoolean()) }
+        }
+    }
+)
+
+/** Whole rupees with Indian digit grouping, e.g. 1,23,456. */
+private fun rupees(amount: BigDecimal): String =
+    CalculatorState.formatNumber(amount.setScale(0, RoundingMode.HALF_UP).toPlainString())
+
+/**
+ * Year or month row: name plus its income, expense and payment totals. Excess / short is not
+ * shown here because only weeks are settled; a month or year cuts through weeks.
+ */
 @Composable
-private fun MonthGroupHeader(label: String, count: Int, expanded: Boolean, onToggle: () -> Unit) {
-    Row(
+private fun ActivityGroupHeader(
+    label: String,
+    totals: PeriodTotals,
+    expanded: Boolean,
+    isYear: Boolean,
+    onToggle: () -> Unit
+) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(start = if (isYear) 0.dp else 16.dp)
             .clip(RoundedCornerShape(10.dp))
+            .background(
+                if (isYear) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
             .clickable(onClick = onToggle)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = if (expanded) Icons.Default.KeyboardArrowDown
@@ -746,15 +779,18 @@ private fun MonthGroupHeader(label: String, count: Int, expanded: Boolean, onTog
                 modifier = Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
+                modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleSmall
+                style = if (isYear) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall
             )
         }
         Text(
-            text = "$count entries",
+            text = "Inc ₹${rupees(totals.income)} · Exp ₹${rupees(totals.expenses)} · Paid ₹${rupees(totals.payments)}",
+            modifier = Modifier.padding(start = 26.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelSmall
         )
@@ -868,8 +904,6 @@ fun ExpenseListCard(expense: DailyExpense, onClick: () -> Unit, onLongClick: () 
                     Text(
                         text = expense.comments,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
