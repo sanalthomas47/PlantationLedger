@@ -69,7 +69,12 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
     private val allExpenses = repository.getDailyExpensesByDateRangeFlow("1900-01-01", "2100-12-31")
 
     val uiState: StateFlow<ExpenseTypeSummaryUiState> =
-        combine(allExpenses, _expandedTypes) { expenses, expanded -> buildUiState(expenses, expanded) }
+        combine(allExpenses, _expandedTypes) { expenses, expanded ->
+            buildUiState(
+                expenses,
+                expanded
+            )
+        }
             .catch { e -> emit(ExpenseTypeSummaryUiState(isLoading = false, error = e.message)) }
             .stateIn(
                 viewModelScope,
@@ -90,9 +95,13 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
     private fun thisYearStart() = LocalDate.now().withDayOfYear(1).format(iso)
     private fun thisYearEnd() = LocalDate.now().format(iso)
     private fun prevYearStart() = LocalDate.now().minusYears(1).withDayOfYear(1).format(iso)
-    private fun prevYearEnd() = LocalDate.now().minusYears(1).with(TemporalAdjusters.lastDayOfYear()).format(iso)
+    private fun prevYearEnd() =
+        LocalDate.now().minusYears(1).with(TemporalAdjusters.lastDayOfYear()).format(iso)
 
-    private fun buildUiState(expenses: List<DailyExpense>, expandedTypes: Set<String>): ExpenseTypeSummaryUiState {
+    private fun buildUiState(
+        expenses: List<DailyExpense>,
+        expandedTypes: Set<String>
+    ): ExpenseTypeSummaryUiState {
         val weekStart = thisWeekStart()
         val weekEnd = thisWeekEnd()
         val prevWeekStart = prevWeekStart()

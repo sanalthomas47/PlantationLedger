@@ -175,9 +175,10 @@ class ReportsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     /** Cash balance brought forward into the start of the selected Reports [dateRange]. */
-    val periodBroughtForward: StateFlow<BigDecimal> = combine(_dateRange, allExpenses) { range, expenses ->
-        expenses.balanceBroughtForward(getStartDate(range))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
+    val periodBroughtForward: StateFlow<BigDecimal> =
+        combine(_dateRange, allExpenses) { range, expenses ->
+            expenses.balanceBroughtForward(getStartDate(range))
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
     /** All-time pesticide / fertilizer purchases with paid status. */
     val vendorLedger: StateFlow<VendorLedger> = combine(
@@ -190,7 +191,10 @@ class ReportsViewModel @Inject constructor(
 
         expenses.sortedBy { it.date }.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+                Json.decodeFromString(
+                    ListSerializer(OtherExpenseEntry.serializer()),
+                    expense.otherExpenses
+                )
                     .filter { it.isVendorPurchase() }
                     .forEach { entry ->
                         items.add(
@@ -272,7 +276,10 @@ class ReportsViewModel @Inject constructor(
 
             for (expense in expenses) {
                 try {
-                    val entries = Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+                    val entries = Json.decodeFromString(
+                        ListSerializer(OtherExpenseEntry.serializer()),
+                        expense.otherExpenses
+                    )
                     var changed = false
                     val updated = entries.map { entry ->
                         if (!changed && !entry.isPaid &&
@@ -301,7 +308,10 @@ class ReportsViewModel @Inject constructor(
 
             repository.updateDailyExpense(
                 expense.copy(
-                    otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), updated)
+                    otherExpenses = Json.encodeToString(
+                        ListSerializer(OtherExpenseEntry.serializer()),
+                        updated
+                    )
                 )
             )
             repository.insertVendorPayment(
@@ -340,7 +350,10 @@ class ReportsViewModel @Inject constructor(
 
             for (expense in expenses) {
                 try {
-                    val entries = Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+                    val entries = Json.decodeFromString(
+                        ListSerializer(OtherExpenseEntry.serializer()),
+                        expense.otherExpenses
+                    )
                     var changed = false
                     val updated = entries.map { entry ->
                         if (!changed && entry.isPaid &&
@@ -369,7 +382,10 @@ class ReportsViewModel @Inject constructor(
             if (expense != null && updated != null) {
                 repository.updateDailyExpense(
                     expense.copy(
-                        otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), updated)
+                        otherExpenses = Json.encodeToString(
+                            ListSerializer(OtherExpenseEntry.serializer()),
+                            updated
+                        )
                     )
                 )
             }
@@ -417,13 +433,20 @@ class ReportsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val strippedGroups = try {
-                    Json.decodeFromString(ListSerializer(WorkerGroupEntry.serializer()), source.workerGroups)
+                    Json.decodeFromString(
+                        ListSerializer(WorkerGroupEntry.serializer()),
+                        source.workerGroups
+                    )
                         .map { it.copy(overtimeHours = 0, overtimeWagePerHour = BigDecimal.ZERO) }
                 } catch (e: Exception) {
                     emptyList()
                 }
-                val strippedGroupsJson = Json.encodeToString(ListSerializer(WorkerGroupEntry.serializer()), strippedGroups)
-                val newLaborCost = strippedGroups.fold(BigDecimal.ZERO) { acc, g -> acc.add(g.calculateTotalGroupCost()) }
+                val strippedGroupsJson = Json.encodeToString(
+                    ListSerializer(WorkerGroupEntry.serializer()),
+                    strippedGroups
+                )
+                val newLaborCost =
+                    strippedGroups.fold(BigDecimal.ZERO) { acc, g -> acc.add(g.calculateTotalGroupCost()) }
 
                 val cloned = source.copy(
                     id = 0,
@@ -495,6 +518,7 @@ class ReportsViewModel @Inject constructor(
                 val lastMonth = today.minusMonths(1)
                 lastMonth.withDayOfMonth(lastMonth.lengthOfMonth())
             }
+
             is DateRange.ThisYear -> today
             is DateRange.Custom -> range.endDate
         }
@@ -508,9 +532,13 @@ class ReportsViewModel @Inject constructor(
         val totals = LinkedHashMap<String, BigDecimal>()
         expenses.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+                Json.decodeFromString(
+                    ListSerializer(OtherExpenseEntry.serializer()),
+                    expense.otherExpenses
+                )
                     .forEach { entry ->
-                        totals[entry.typeName] = totals.getOrDefault(entry.typeName, BigDecimal.ZERO).add(entry.amount)
+                        totals[entry.typeName] =
+                            totals.getOrDefault(entry.typeName, BigDecimal.ZERO).add(entry.amount)
                     }
             } catch (e: Exception) {
                 // skip
@@ -529,7 +557,8 @@ class ReportsViewModel @Inject constructor(
         expenses.sortedBy { it.date }.map {
             DailyTrend(
                 it.date,
-                it.totalLaborCost.add(it.totalOvertimeCost).add(it.totalOtherExpensesCost).add(it.advanceAmount)
+                it.totalLaborCost.add(it.totalOvertimeCost).add(it.totalOtherExpensesCost)
+                    .add(it.advanceAmount)
             )
         }
 
@@ -540,9 +569,13 @@ class ReportsViewModel @Inject constructor(
         val map = LinkedHashMap<String, IncomeBreakdown>()
         expenses.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(IncomeEntry.serializer()), expense.incomeEntries)
+                Json.decodeFromString(
+                    ListSerializer(IncomeEntry.serializer()),
+                    expense.incomeEntries
+                )
                     .forEach { entry ->
-                        val current = map.getOrDefault(entry.typeName, IncomeBreakdown(entry.typeName))
+                        val current =
+                            map.getOrDefault(entry.typeName, IncomeBreakdown(entry.typeName))
                         map[entry.typeName] = current.copy(
                             totalAmount = current.totalAmount.add(entry.amount),
                             totalWeight = current.totalWeight + entry.weight
@@ -559,10 +592,17 @@ class ReportsViewModel @Inject constructor(
         val map = LinkedHashMap<String, WorkerTypeSpecific>()
         expenses.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(WorkerGroupEntry.serializer()), expense.workerGroups)
+                Json.decodeFromString(
+                    ListSerializer(WorkerGroupEntry.serializer()),
+                    expense.workerGroups
+                )
                     .forEach { group ->
-                        val current = map.getOrDefault(group.workerTypeName, WorkerTypeSpecific(group.workerTypeName))
-                        val baseCost = group.wagePerDay.multiply(BigDecimal.valueOf(group.count.toLong()))
+                        val current = map.getOrDefault(
+                            group.workerTypeName,
+                            WorkerTypeSpecific(group.workerTypeName)
+                        )
+                        val baseCost =
+                            group.wagePerDay.multiply(BigDecimal.valueOf(group.count.toLong()))
                         val overtimeCost = group.overtimeWagePerHour
                             .multiply(BigDecimal.valueOf(group.overtimeHours.toLong()))
                             .multiply(BigDecimal.valueOf(group.count.toLong()))
@@ -583,10 +623,16 @@ class ReportsViewModel @Inject constructor(
         val map = LinkedHashMap<String, OtherExpenseSpecific>()
         expenses.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+                Json.decodeFromString(
+                    ListSerializer(OtherExpenseEntry.serializer()),
+                    expense.otherExpenses
+                )
                     .forEach { entry ->
                         val key = "${entry.typeName}||${entry.subtypeName}"
-                        val current = map.getOrDefault(key, OtherExpenseSpecific(entry.typeName, entry.subtypeName))
+                        val current = map.getOrDefault(
+                            key,
+                            OtherExpenseSpecific(entry.typeName, entry.subtypeName)
+                        )
                         map[key] = current.copy(
                             totalQuantity = current.totalQuantity + entry.quantity,
                             totalAmount = current.totalAmount.add(entry.amount)
@@ -602,7 +648,10 @@ class ReportsViewModel @Inject constructor(
     fun getIndividualOtherExpenses(expenses: List<DailyExpense>): List<Pair<String, OtherExpenseEntry>> {
         return expenses.sortedBy { it.date }.flatMap { expense ->
             try {
-                Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+                Json.decodeFromString(
+                    ListSerializer(OtherExpenseEntry.serializer()),
+                    expense.otherExpenses
+                )
                     .map { expense.date to it }
             } catch (e: Exception) {
                 emptyList()
@@ -617,11 +666,15 @@ class ReportsViewModel @Inject constructor(
         val map = LinkedHashMap<Pair<String, String>, AdvanceSpecific>()
         expenses.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(AdvanceEntry.serializer()), expense.advanceEntries)
+                Json.decodeFromString(
+                    ListSerializer(AdvanceEntry.serializer()),
+                    expense.advanceEntries
+                )
                     .forEach { entry ->
                         val recipient = entry.recipientName.ifBlank { "General" }
                         val key = recipient to entry.reason
-                        val current = map.getOrDefault(key, AdvanceSpecific(recipient, entry.reason))
+                        val current =
+                            map.getOrDefault(key, AdvanceSpecific(recipient, entry.reason))
                         map[key] = current.copy(totalAmount = current.totalAmount.add(entry.amount))
                     }
             } catch (e: Exception) {
@@ -635,10 +688,16 @@ class ReportsViewModel @Inject constructor(
         val map = LinkedHashMap<Pair<String, String>, WorkerTypeSummary>()
         expenses.forEach { expense ->
             try {
-                Json.decodeFromString(ListSerializer(WorkerGroupEntry.serializer()), expense.workerGroups)
+                Json.decodeFromString(
+                    ListSerializer(WorkerGroupEntry.serializer()),
+                    expense.workerGroups
+                )
                     .forEach { group ->
                         val key = group.workerTypeName to group.comments
-                        val current = map.getOrDefault(key, WorkerTypeSummary(group.workerTypeName, group.comments))
+                        val current = map.getOrDefault(
+                            key,
+                            WorkerTypeSummary(group.workerTypeName, group.comments)
+                        )
                         map[key] = current.copy(
                             totalCount = current.totalCount + group.count,
                             totalCost = current.totalCost.add(group.calculateTotalGroupCost())
