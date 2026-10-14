@@ -112,9 +112,7 @@ fun buildWeeklyBalances(expenses: List<DailyExpense>, today: LocalDate = LocalDa
 data class PeriodTotals(
     val income: BigDecimal,
     /** Labour + overtime + other expenses, including pesticide / fertilizer bills. */
-    val expenses: BigDecimal,
-    /** Advances + weekly settlements + excess balance paid. */
-    val payments: BigDecimal
+    val expenses: BigDecimal
 )
 
 data class MonthActivity(val month: YearMonth, val totals: PeriodTotals, val days: List<DailyExpense>)
@@ -138,6 +136,5 @@ private fun totalsOf(days: List<DailyExpense>) = PeriodTotals(
     income = days.fold(BigDecimal.ZERO) { acc, e -> acc.add(e.totalIncome) },
     expenses = days.fold(BigDecimal.ZERO) { acc, e ->
         acc.add(e.totalLaborCost).add(e.totalOvertimeCost).add(e.totalOtherExpensesCost)
-    },
-    payments = days.fold(BigDecimal.ZERO) { acc, e -> acc.add(e.balancePayments()) }
+    }
 )

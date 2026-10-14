@@ -41,14 +41,11 @@ class ActivityTreeTest {
 
         assertMoney(5_000, jan.totals.income)
         assertMoney(2_500, jan.totals.expenses)
-        assertMoney(2_100, jan.totals.payments)              // 1,500 settlement + 600 advance
 
         assertMoney(5_000, y2026.totals.income)
         assertMoney(2_800, y2026.totals.expenses)
-        assertMoney(2_100, y2026.totals.payments)
 
         assertMoney(1_500, y2025.totals.expenses)            // pesticide bills are real spending
-        assertMoney(1_200, y2025.totals.payments)
     }
 
     @Test

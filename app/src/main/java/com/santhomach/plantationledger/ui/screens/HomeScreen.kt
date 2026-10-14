@@ -744,7 +744,7 @@ private fun rupees(amount: BigDecimal): String =
     CalculatorState.formatNumber(amount.setScale(0, RoundingMode.HALF_UP).toPlainString())
 
 /**
- * Year or month row: name plus its income, expense and payment totals. Excess / short is not
+ * Year or month row: name plus its income and expense totals. Excess / short is not
  * shown here because only weeks are settled; a month or year cuts through weeks.
  */
 @Composable
@@ -789,7 +789,7 @@ private fun ActivityGroupHeader(
             )
         }
         Text(
-            text = "Inc ₹${rupees(totals.income)} · Exp ₹${rupees(totals.expenses)} · Paid ₹${rupees(totals.payments)}",
+            text = "Inc ₹${rupees(totals.income)} · Exp ₹${rupees(totals.expenses)}",
             modifier = Modifier.padding(start = 26.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelSmall
