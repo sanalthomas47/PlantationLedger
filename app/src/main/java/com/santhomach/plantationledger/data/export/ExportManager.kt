@@ -30,6 +30,7 @@ import java.time.LocalDateTime
 
 /**
  * Full snapshot of the database used for backup / restore.
+ * Exports the data into Json
  */
 @Serializable
 data class ExportData(
