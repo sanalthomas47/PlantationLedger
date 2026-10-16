@@ -66,7 +66,10 @@ data class WeekBalance(
  * An edit counts as "after settlement" when it happened more than one day after both the
  * settlement date and the day's own date (so normal late-evening entry is not flagged).
  */
-fun buildWeeklyBalances(expenses: List<DailyExpense>, today: LocalDate = LocalDate.now()): List<WeekBalance> {
+fun buildWeeklyBalances(
+    expenses: List<DailyExpense>,
+    today: LocalDate = LocalDate.now()
+): List<WeekBalance> {
     val currentWeek = weekStartOf(today)
     val byWeek = expenses
         .mapNotNull { e -> runCatching { LocalDate.parse(e.date) }.getOrNull()?.let { it to e } }
@@ -85,11 +88,13 @@ fun buildWeeklyBalances(expenses: List<DailyExpense>, today: LocalDate = LocalDa
             .filter { it.second.weeklyPaymentDone.signum() > 0 }
             .maxOfOrNull { it.first }
 
-        val editedAfter = if (settlementDate == null) emptyList() else days.mapNotNull { (date, e) ->
-            val edited = runCatching { LocalDateTime.parse(e.updatedAt).toLocalDate() }.getOrNull()
-            val threshold = maxOf(date, settlementDate).plusDays(1)
-            if (edited != null && edited.isAfter(threshold)) date else null
-        }.sorted()
+        val editedAfter =
+            if (settlementDate == null) emptyList() else days.mapNotNull { (date, e) ->
+                val edited =
+                    runCatching { LocalDateTime.parse(e.updatedAt).toLocalDate() }.getOrNull()
+                val threshold = maxOf(date, settlementDate).plusDays(1)
+                if (edited != null && edited.isAfter(threshold)) date else null
+            }.sorted()
 
         val isCurrent = start == currentWeek
         WeekBalance(
@@ -115,7 +120,11 @@ data class PeriodTotals(
     val expenses: BigDecimal
 )
 
-data class MonthActivity(val month: YearMonth, val totals: PeriodTotals, val days: List<DailyExpense>)
+data class MonthActivity(
+    val month: YearMonth,
+    val totals: PeriodTotals,
+    val days: List<DailyExpense>
+)
 
 data class YearActivity(val year: Int, val totals: PeriodTotals, val months: List<MonthActivity>)
 
