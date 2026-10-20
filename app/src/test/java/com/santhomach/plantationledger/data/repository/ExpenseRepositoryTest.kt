@@ -130,9 +130,10 @@ class ExpenseRepositoryTest {
         repository.initializeDefaultData()
 
         val types = fake.expenseTypes.all()
-        assertEquals(12, types.size)                                    // 11 defaults + 1 of the user's
+        assertEquals(13, types.size)                                    // 12 defaults + 1 of the user's
         assertEquals(types.size, types.map { it.typeName }.toSet().size)
         assertEquals("my own description", types.single { it.typeName == "Fuel" }.description)
+        assertTrue(types.any { it.typeName == "Foliar" })               // tracked in the Vendor Ledger
         assertEquals(2, fake.expenseSubtypes.all().size)
         assertEquals(3, fake.incomeTypes.all().size)
         assertEquals(4, fake.workerTypes.all().size)

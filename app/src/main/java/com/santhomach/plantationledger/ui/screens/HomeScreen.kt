@@ -465,7 +465,7 @@ private fun PerformanceHeroCard(
     broughtForward: BigDecimal = BigDecimal.ZERO,
     onOpenWeeklyBalance: () -> Unit = {}
 ) {
-    // Pesticide / fertilizer bills are managed in the Vendor Ledger, so neither the purchases
+    // Pesticide / fertilizer / foliar bills are managed in the Vendor Ledger, so neither the purchases
     // nor the payments to vendors take part in the weekly excess / short balance.
     val weekExpenses = weekSummary.totalLaborCost
         .add(weekSummary.totalOvertimeCost)

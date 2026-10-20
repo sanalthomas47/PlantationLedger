@@ -208,7 +208,7 @@ class ExpenseRepository @Inject constructor(
     /**
      * One-time migration for vendor payments recorded before payments were linked to a specific
      * expense line. The legacy (unlinked) total is applied, oldest expense first, to unpaid
-     * Pesticide / Fertilizer entries by marking them paid, after which the legacy rows are removed.
+     * Pesticide / Fertilizer / Foliar entries by marking them paid, after which the legacy rows are removed.
      */
     suspend fun migrateVendorLegacyPayments() {
         val legacyPayments = vendorPaymentDao.getAll().filter { it.sourceExpenseDate == null }
@@ -371,6 +371,7 @@ class ExpenseRepository @Inject constructor(
             ExpenseType(typeName = "Pesticides", description = "Pesticide purchases"),
             ExpenseType(typeName = "Fuel", description = "Fuel purchases"),
             ExpenseType(typeName = "Fertilizers", description = "Fertilizer purchases"),
+            ExpenseType(typeName = "Foliar", description = "Foliar spray purchases"),
             ExpenseType(typeName = "Capital Expenses", description = "Capital Expenses"),
             ExpenseType(typeName = "Cardamom Drying", description = "Drying Cost"),
             ExpenseType(typeName = "Equipment", description = "Equipment maintenance and purchases"),
@@ -455,7 +456,7 @@ data class ExpenseSummary(
     val totalAdvanceAmount: BigDecimal = BigDecimal.ZERO,
     val totalWeeklyPayment: BigDecimal = BigDecimal.ZERO,
     val totalExcessBalance: BigDecimal = BigDecimal.ZERO,
-    /** Pesticide / fertilizer purchases in the range; excluded from excess / short. */
+    /** Pesticide / fertilizer / foliar purchases in the range; excluded from excess / short. */
     val totalVendorPurchases: BigDecimal = BigDecimal.ZERO,
     val netAmount: BigDecimal = BigDecimal.ZERO,
     val totalDays: Int = 0,
@@ -474,7 +475,7 @@ data class WeeklyExpenseSummary(
     val totalAdvanceAmount: BigDecimal = BigDecimal.ZERO,
     val totalWeeklyPayment: BigDecimal = BigDecimal.ZERO,
     val totalExcessBalance: BigDecimal = BigDecimal.ZERO,
-    /** Pesticide / fertilizer purchases in the range; excluded from excess / short. */
+    /** Pesticide / fertilizer / foliar purchases in the range; excluded from excess / short. */
     val totalVendorPurchases: BigDecimal = BigDecimal.ZERO,
     val netAmount: BigDecimal = BigDecimal.ZERO,
     val totalWeeks: Int = 0,
