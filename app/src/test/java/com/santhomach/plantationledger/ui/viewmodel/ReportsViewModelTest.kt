@@ -53,19 +53,20 @@ class ReportsViewModelTest {
     // ---- Vendor ledger ------------------------------------------------------------------------
 
     @Test
-    fun vendorLedgerListsOnlyPesticideAndFertilizerBills() = runTest(main.dispatcher) {
+    fun vendorLedgerListsOnlyPesticideFertilizerAndFoliarBills() = runTest(main.dispatcher) {
         val vm = viewModel(
             days = listOf(
                 dailyExpense("2026-08-12", others = listOf(other("Pesticides", 23_000, paid = true), other("Fuel", 625))),
-                dailyExpense("2026-08-14", others = listOf(other("Fertilizers", 15_300), other("Fertilizers", 5_400, paid = true)))
+                dailyExpense("2026-08-14", others = listOf(other("Fertilizers", 15_300), other("Fertilizers", 5_400, paid = true))),
+                dailyExpense("2026-08-16", others = listOf(other("Foliar", 4_200, subtype = "Micronutrient")))
             )
         )
 
         val ledger = vm.vendorLedger.value
-        assertEquals(3, ledger.items.size)
-        assertMoney(43_700, ledger.totalExpenses)
+        assertEquals(4, ledger.items.size)
+        assertMoney(47_900, ledger.totalExpenses)
         assertMoney(28_400, ledger.totalPaid)
-        assertMoney(15_300, ledger.outstanding)
+        assertMoney(19_500, ledger.outstanding)
         assertFalse(ledger.items.any { it.typeName == "Fuel" })
     }
 

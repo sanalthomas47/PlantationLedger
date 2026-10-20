@@ -294,7 +294,7 @@ fun ReportsScreen(
                         val totalExpenses = dailySummary.totalLaborCost
                             .add(dailySummary.totalOvertimeCost)
                             .add(dailySummary.totalOtherExpenses)
-                        // Offset leaves out pesticide / fertilizer bills (managed in the Vendor Ledger).
+                        // Offset leaves out pesticide / fertilizer / foliar bills (managed in the Vendor Ledger).
                         val weekExpenses = weeklySummary.totalLaborCost
                             .add(weeklySummary.totalOvertimeCost)
                             .add(weeklySummary.totalOtherExpenses)
@@ -370,7 +370,7 @@ fun ReportsScreen(
                         val totalPayments = weeklySummary.totalAdvanceAmount
                             .add(weeklySummary.totalWeeklyPayment)
                             .add(weeklySummary.totalExcessBalance)
-                        // Offset leaves out pesticide / fertilizer bills (managed in the Vendor Ledger).
+                        // Offset leaves out pesticide / fertilizer / foliar bills (managed in the Vendor Ledger).
                         val offset = totalExpenses
                             .subtract(weeklySummary.totalVendorPurchases)
                             .subtract(totalPayments)
@@ -1050,7 +1050,7 @@ private fun SummaryRow(
 @Composable
 private fun OffsetNote() {
     Text(
-        text = "Offset excludes pesticide/fertilizer bills (tracked in Vendor Ledger)",
+        text = "Offset excludes pesticide/fertilizer/foliar bills (tracked in Vendor Ledger)",
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.bodySmall
     )

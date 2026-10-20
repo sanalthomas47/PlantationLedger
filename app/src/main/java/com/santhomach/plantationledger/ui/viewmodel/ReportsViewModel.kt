@@ -99,7 +99,7 @@ data class WorkerTypeSummary(
 )
 
 /**
- * One Pesticide / Fertilizer purchase line shown in the vendor ledger.
+ * One Pesticide / Fertilizer / Foliar purchase line shown in the vendor ledger.
  */
 data class VendorExpenseItem(
     val date: String,
@@ -187,7 +187,7 @@ class ReportsViewModel @Inject constructor(
             expenses.balanceBroughtForward(getStartDate(range))
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal.ZERO)
 
-    /** All-time pesticide / fertilizer purchases with paid status. */
+    /** All-time pesticide / fertilizer / foliar purchases with paid status. */
     val vendorLedger: StateFlow<VendorLedger> = combine(
         repository.getDailyExpensesByDateRangeFlow("1900-01-01", "2100-12-31"),
         repository.getAllVendorPaymentsFlow()
