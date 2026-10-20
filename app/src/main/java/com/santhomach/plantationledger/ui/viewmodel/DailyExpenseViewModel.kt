@@ -845,7 +845,7 @@ class DailyExpenseViewModel @Inject constructor(
             it.totalLaborCost.add(it.totalOvertimeCost).add(it.totalOtherExpensesCost)
         } ?: BigDecimal.ZERO
 
-    /** Pesticide / fertilizer purchases of the current day (tracked in the Vendor Ledger). */
+    /** Pesticide / fertilizer / foliar purchases of the current day (tracked in the Vendor Ledger). */
     fun getVendorPurchases(): BigDecimal =
         _currentExpense.value?.vendorPurchaseTotal() ?: BigDecimal.ZERO
 

@@ -571,7 +571,7 @@ fun DailyExpenseScreen(
                     SummaryRow("TOTAL ACTUAL COSTS", "₹${viewModel.getTotalActualExpenses()}", isTotal = true)
                     val vendorPurchases = viewModel.getVendorPurchases()
                     if (vendorPurchases > BigDecimal.ZERO) {
-                        SummaryRow("Less: pesticide/fertilizer (Vendor Ledger)", "-₹$vendorPurchases")
+                        SummaryRow("Less: pesticide/fertilizer/foliar (Vendor Ledger)", "-₹$vendorPurchases")
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))

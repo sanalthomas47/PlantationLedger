@@ -116,7 +116,7 @@ fun buildWeeklyBalances(
 /** Totals for one year or month of the Home activity tree. */
 data class PeriodTotals(
     val income: BigDecimal,
-    /** Labour + overtime + other expenses, including pesticide / fertilizer bills. */
+    /** Labour + overtime + other expenses, including pesticide / fertilizer / foliar bills. */
     val expenses: BigDecimal
 )
 
