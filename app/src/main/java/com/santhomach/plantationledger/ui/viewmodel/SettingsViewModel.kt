@@ -37,6 +37,8 @@ enum class ThemeMode(val label: String) {
 data class SettingsUiState(
     val isExporting: Boolean = false,
     val exportMessage: String? = null,
+    /** Where the last export was saved (e.g. "Downloads/plantation_ledger_backup_1.json"), shown as a link. */
+    val exportedFilePath: String? = null,
     val error: String? = null
 )
 
@@ -271,7 +273,11 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(isExporting = true) }
             val path = exportManager.exportToFile()
             _uiState.update {
-                it.copy(isExporting = false, exportMessage = "Data exported successfully to: $path")
+                it.copy(
+                    isExporting = false,
+                    exportMessage = "Data exported successfully to: $path",
+                    exportedFilePath = path
+                )
             }
         } catch (e: Exception) {
             _uiState.update { it.copy(isExporting = false, error = "Export failed: ${e.message}") }
@@ -291,14 +297,14 @@ class SettingsViewModel @Inject constructor(
             } else {
                 "Data imported successfully. Please restart the app if changes don't appear immediately."
             }
-            _uiState.update { it.copy(isExporting = false, exportMessage = message) }
+            _uiState.update { it.copy(isExporting = false, exportMessage = message, exportedFilePath = null) }
         } catch (e: Exception) {
             _uiState.update { it.copy(isExporting = false, error = "Import failed: ${e.message}") }
         }
     }
 
     fun clearMessages() {
-        _uiState.update { it.copy(exportMessage = null, error = null) }
+        _uiState.update { it.copy(exportMessage = null, exportedFilePath = null, error = null) }
     }
 
     companion object {

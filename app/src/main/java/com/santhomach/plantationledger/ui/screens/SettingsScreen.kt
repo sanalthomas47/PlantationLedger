@@ -1,5 +1,10 @@
 package com.santhomach.plantationledger.ui.screens
 
+import android.app.DownloadManager
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -54,7 +59,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.santhomach.plantationledger.data.model.ExpenseType
@@ -64,8 +76,8 @@ import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerType
 import com.santhomach.plantationledger.ui.viewmodel.SettingsViewModel
 import com.santhomach.plantationledger.ui.viewmodel.ThemeMode
-import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import kotlinx.coroutines.launch
 
 /**
  * Master-data management (staff, worker types, tasks, categories), theme selection and
@@ -251,12 +263,7 @@ fun SettingsScreen(
                         }
 
                         uiState.exportMessage?.let { message ->
-                            Text(
-                                text = message,
-                                modifier = Modifier.padding(top = 4.dp),
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            ExportMessage(message = message, filePath = uiState.exportedFilePath)
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -652,4 +659,50 @@ fun AddSimpleItemDialog(
             }
         }
     )
+}
+
+/**
+ * Export / import result. After an export the saved file's path is a link that opens the
+ * Downloads folder in the Files app, where the new backup is listed.
+ */
+@Composable
+private fun ExportMessage(message: String, filePath: String?) {
+    val context = LocalContext.current
+    val color = MaterialTheme.colorScheme.primary
+    val text = buildAnnotatedString {
+        val start = filePath?.let { message.lastIndexOf(it) } ?: -1
+        if (filePath == null || start < 0) {
+            append(message)
+        } else {
+            append(message.substring(0, start))
+            withLink(
+                LinkAnnotation.Clickable(
+                    tag = "export_file",
+                    styles = TextLinkStyles(
+                        style = SpanStyle(fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline)
+                    ),
+                    linkInteractionListener = { openDownloadsFolder(context) }
+                )
+            ) {
+                append(filePath)
+            }
+            append(message.substring(start + filePath.length))
+        }
+    }
+    Text(
+        text = text,
+        modifier = Modifier.padding(top = 4.dp),
+        color = color,
+        style = MaterialTheme.typography.bodySmall
+    )
+}
+
+/** Opens the system Downloads folder; falls back to a hint when no Files app can show it. */
+private fun openDownloadsFolder(context: Context) {
+    val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, "Open the Files app and go to Downloads", Toast.LENGTH_LONG).show()
+    }
 }
