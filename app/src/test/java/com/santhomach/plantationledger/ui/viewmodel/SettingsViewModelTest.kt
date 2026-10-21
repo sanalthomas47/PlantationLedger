@@ -90,7 +90,24 @@ class SettingsViewModelTest {
 
         assertEquals("Data exported successfully to: Downloads/plantation_ledger_backup_1.json",
             vm.uiState.value.exportMessage)
+        // The path is shown as a link to the Downloads folder.
+        assertEquals("Downloads/plantation_ledger_backup_1.json", vm.uiState.value.exportedFilePath)
         assertFalse(vm.uiState.value.isExporting)
+
+        vm.clearMessages()
+        assertNull(vm.uiState.value.exportedFilePath)
+    }
+
+    @Test
+    fun anImportMessageHasNoFileLink() = runTest(main.dispatcher) {
+        coEvery { exportManager.exportToFile(any()) } returns "Downloads/plantation_ledger_backup_1.json"
+        coEvery { exportManager.importFromJson(any()) } returns null
+
+        vm.exportData(mockk())
+        vm.importData(mockk<Uri>(), contextReading("{}"))
+
+        assertTrue(vm.uiState.value.exportMessage!!.startsWith("Data imported successfully."))
+        assertNull(vm.uiState.value.exportedFilePath)
     }
 
     @Test

@@ -5,18 +5,20 @@ import kotlinx.serialization.json.Json
 import java.math.BigDecimal
 
 /*
- * Pesticide and fertilizer purchases ("vendor bills") are bought on credit and settled through
+ * Pesticide, fertilizer and foliar purchases ("vendor bills") are bought on credit and settled through
  * the Vendor Ledger. They are a real cost of running the estate, so they stay in expense totals,
  * reports and efficiency figures, but they are kept OUT of every excess / short (cash balance)
  * calculation. Their payments are kept out of those calculations too.
  */
 
-/** True when this line is a pesticide or fertilizer purchase tracked in the Vendor Ledger. */
-fun OtherExpenseEntry.isVendorPurchase(): Boolean =
-    typeName.contains("Pesticide", ignoreCase = true) ||
-        typeName.contains("Fertilizer", ignoreCase = true)
+/** Expense types (matched by name, ignoring case) whose purchases are tracked in the Vendor Ledger. */
+private val VENDOR_TYPES = listOf("Pesticide", "Fertilizer", "Foliar")
 
-/** Sum of this day's pesticide / fertilizer purchases (paid or not). */
+/** True when this line is a pesticide, fertilizer or foliar purchase tracked in the Vendor Ledger. */
+fun OtherExpenseEntry.isVendorPurchase(): Boolean =
+    VENDOR_TYPES.any { typeName.contains(it, ignoreCase = true) }
+
+/** Sum of this day's pesticide / fertilizer / foliar purchases (paid or not). */
 fun DailyExpense.vendorPurchaseTotal(): BigDecimal =
     try {
         Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), otherExpenses)
