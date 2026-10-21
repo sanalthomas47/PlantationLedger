@@ -55,7 +55,7 @@ class WeeklyFundsViewModel @Inject constructor(
             endDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
         ).map { summary ->
             WeekComparison(
-                // Pesticide / fertilizer bills are managed in the Vendor Ledger, not in this balance.
+                // Pesticide / fertilizer / foliar bills are managed in the Vendor Ledger, not in this balance.
                 totalExpenses = summary.totalLaborCost
                     .add(summary.totalOvertimeCost)
                     .add(summary.totalOtherExpenses)
