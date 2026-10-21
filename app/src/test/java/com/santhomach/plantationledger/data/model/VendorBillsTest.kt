@@ -30,29 +30,33 @@ class VendorBillsTest {
         )
 
     @Test
-    fun recognisesPesticideAndFertilizerCategories() {
+    fun recognisesPesticideFertilizerAndFoliarCategories() {
         assertTrue(entry("Pesticides", 1).isVendorPurchase())
         assertTrue(entry("Fertilizers", 1).isVendorPurchase())
         assertTrue(entry("organic fertilizer", 1).isVendorPurchase())
+        assertTrue(entry("Foliar", 1).isVendorPurchase())
+        assertTrue(entry("foliar spray", 1, subtype = "Micronutrient").isVendorPurchase())
         assertFalse(entry("Fuel", 1, subtype = "Diesel").isVendorPurchase())
     }
 
     @Test
     fun vendorBillsAreLeftOutOfTheBalanceWhetherPaidOrNot() {
         // Labour 30,000 + diesel 2,000 + fertilizer 12,000 (paid) + pesticide 5,000 (unpaid)
+        // + foliar 3,000 (unpaid)
         val expense = day(
             labour = 30_000,
             entries = listOf(
                 entry("Fuel", 2_000),
                 entry("Fertilizers", 12_000, paid = true),
-                entry("Pesticides", 5_000, paid = false)
+                entry("Pesticides", 5_000, paid = false),
+                entry("Foliar", 3_000, paid = false)
             ),
             settlement = 32_000
         )
 
-        assertEquals(BigDecimal(17_000), expense.vendorPurchaseTotal())
+        assertEquals(BigDecimal(20_000), expense.vendorPurchaseTotal())
         // Real cost still includes the vendor bills...
-        assertEquals(BigDecimal(49_000), expense.totalLaborCost.add(expense.totalOtherExpensesCost))
+        assertEquals(BigDecimal(52_000), expense.totalLaborCost.add(expense.totalOtherExpensesCost))
         // ...but the balance only counts labour + diesel.
         assertEquals(BigDecimal(32_000), expense.balanceExpenses())
 

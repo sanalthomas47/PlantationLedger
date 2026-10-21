@@ -55,7 +55,7 @@ import java.time.format.DateTimeFormatter
 private val PaidGreen = Color(0xFF2E7D32)
 
 /**
- * Pesticide / fertilizer purchases with their paid status, and a dialog to mark a bill as paid.
+ * Pesticide / fertilizer / foliar purchases with their paid status, and a dialog to mark a bill as paid.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,7 +97,7 @@ fun VendorLedgerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No pesticide or fertilizer expenses recorded.",
+                    text = "No pesticide, fertilizer or foliar expenses recorded.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium
                 )

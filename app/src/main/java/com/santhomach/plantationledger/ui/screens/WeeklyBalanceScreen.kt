@@ -48,7 +48,7 @@ private fun rupees(amount: BigDecimal): String =
     "₹" + amount.abs().stripTrailingZeros().toPlainString()
 
 /**
- * Every week's payments against its costs (pesticide / fertilizer bills excluded) with the
+ * Every week's payments against its costs (pesticide / fertilizer / foliar bills excluded) with the
  * running balance, newest first. Weeks with no payment or edits after settlement are flagged.
  * Tapping a week opens Reports for that week.
  */
@@ -101,7 +101,7 @@ fun WeeklyBalanceScreen(
                         BalanceLine("Balance now (incl. this week)", state.currentBalance, bold = true)
                         Text(
                             text = "Payments (advances + settlements) minus labour, overtime and other expenses. " +
-                                "Pesticide/fertilizer bills are excluded (tracked in Vendor Ledger).",
+                                "Pesticide/fertilizer/foliar bills are excluded (tracked in Vendor Ledger).",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
