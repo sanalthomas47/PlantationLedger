@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.santhomach.plantationledger.data.AppDatabase
+import com.santhomach.plantationledger.data.backup.AndroidBackupStore
+import com.santhomach.plantationledger.data.backup.BackupStore
 import com.santhomach.plantationledger.data.backup.DailyBackupManager
 import com.santhomach.plantationledger.data.export.ExportManager
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
@@ -53,5 +55,11 @@ object DatabaseModule {
         dataStore: DataStore<Preferences>
     ): DailyBackupManager {
         return DailyBackupManager(context, exportManager, dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBackupStore(@ApplicationContext context: Context): BackupStore {
+        return AndroidBackupStore(context)
     }
 }
