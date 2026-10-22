@@ -88,6 +88,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToCsvImport: () -> Unit = {},
+    onNavigateToBackups: () -> Unit = {},
     viewModelArg: SettingsViewModel? = null
 ) {
     // Keep @Preview usable without Hilt.
@@ -264,6 +265,15 @@ fun SettingsScreen(
 
                         uiState.exportMessage?.let { message ->
                             ExportMessage(message = message, filePath = uiState.exportedFilePath)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = onNavigateToBackups,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Manage Backups")
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
