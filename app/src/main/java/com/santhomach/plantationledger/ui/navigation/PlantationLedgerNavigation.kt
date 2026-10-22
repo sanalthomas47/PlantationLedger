@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.santhomach.plantationledger.ui.screens.BackupsScreen
 import com.santhomach.plantationledger.ui.screens.CsvImportScreen
 import com.santhomach.plantationledger.ui.screens.DailyExpenseScreen
 import com.santhomach.plantationledger.ui.screens.ExpenseTypeSummaryScreen
@@ -35,6 +36,7 @@ sealed class Screen(val route: String) {
     }
 
     object Settings : Screen("settings")
+    object Backups : Screen("backups")
     object Payments : Screen("payments")
     object WeeklyFunds : Screen("weekly_funds")
     object Search : Screen("search")
@@ -122,8 +124,13 @@ fun PlantationLedgerNavigation(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToCsvImport = { navController.navigate(Screen.CsvImport.route) }
+                onNavigateToCsvImport = { navController.navigate(Screen.CsvImport.route) },
+                onNavigateToBackups = { navController.navigate(Screen.Backups.route) }
             )
+        }
+
+        composable(Screen.Backups.route) {
+            BackupsScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.CsvImport.route) {
