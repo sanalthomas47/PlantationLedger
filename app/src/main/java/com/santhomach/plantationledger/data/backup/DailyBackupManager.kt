@@ -48,7 +48,7 @@ class DailyBackupManager(
     }
 
     companion object {
-        private const val BACKUP_DIR = "auto_backups"
+        const val BACKUP_DIR = "auto_backups"
         private const val MAX_BACKUPS = 7
         private val LAST_BACKUP_DATE_KEY = stringPreferencesKey("last_auto_backup_date")
     }
