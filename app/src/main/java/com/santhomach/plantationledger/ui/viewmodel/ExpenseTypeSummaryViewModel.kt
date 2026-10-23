@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.santhomach.plantationledger.data.model.DailyExpense
 import com.santhomach.plantationledger.data.model.OtherExpenseEntry
+import com.santhomach.plantationledger.data.model.WorkerGroupEntry
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,17 +47,40 @@ data class ExpenseTypeRow(
     val isExpanded: Boolean = false
 )
 
+/** One labour type's share of a task. */
+data class TaskLabourRow(
+    val labourType: String,
+    val thisYearAmount: BigDecimal,
+    val allTimeAmount: BigDecimal
+)
+
+/** Labour cost (wages + overtime) of one work task. */
+data class TaskRow(
+    val taskName: String,
+    val thisYearAmount: BigDecimal,
+    val allTimeAmount: BigDecimal,
+    val thisYearPercent: Float,
+    val allTimePercent: Float,
+    val labourTypes: List<TaskLabourRow>,
+    val isExpanded: Boolean = false
+)
+
 data class ExpenseTypeSummaryUiState(
     val rows: List<ExpenseTypeRow> = emptyList(),
     val thisWeekTotal: BigDecimal = BigDecimal.ZERO,
     val thisYearTotal: BigDecimal = BigDecimal.ZERO,
     val allTimeTotal: BigDecimal = BigDecimal.ZERO,
+    /** Labour by work task, largest all-time cost first. */
+    val taskRows: List<TaskRow> = emptyList(),
+    val taskThisYearTotal: BigDecimal = BigDecimal.ZERO,
+    val taskAllTimeTotal: BigDecimal = BigDecimal.ZERO,
     val isLoading: Boolean = true,
     val error: String? = null
 )
 
 /**
- * Breaks "other expenses" down by expense type and subtype for this week, this year and all time.
+ * Breaks every expense down by type and subtype for this week, this year and all time: labour (by
+ * labour type, plus overtime) and each "other expense" type.
  */
 @HiltViewModel
 class ExpenseTypeSummaryViewModel @Inject constructor(
@@ -87,6 +111,8 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
             if (set.contains(typeName)) set - typeName else set + typeName
         }
     }
+
+    fun toggleTaskExpanded(taskName: String) = toggleExpanded(TASK_KEY_PREFIX + taskName)
 
     private fun thisWeekStart() = LocalDate.now().with(DayOfWeek.MONDAY).format(iso)
     private fun thisWeekEnd() = LocalDate.now().with(DayOfWeek.SATURDAY).format(iso)
@@ -126,8 +152,12 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
         val yearTotal = yearMap.values.sumOf { it.values.sumOf { v -> v } }
         val allTotal = allMap.values.sumOf { it.values.sumOf { v -> v } }
 
-        val rows = allMap.keys.sorted().map { typeName ->
-            val subtypeNames = (allMap[typeName]?.keys ?: emptySet()).sorted()
+        // Labour first (usually the largest cost), then the other expense types by name.
+        val typeOrder = allMap.keys.sortedWith(compareBy({ it != LABOUR }, { it }))
+        val rows = typeOrder.map { typeName ->
+            // Labour types by name with Overtime last; other types' subtypes by name.
+            val subtypeNames = (allMap[typeName]?.keys ?: emptySet())
+                .sortedWith(compareBy({ it == OVERTIME || it == OTHER_LABOUR }, { it }))
 
             val weekAmount = weekMap[typeName]?.values?.sumOf { it } ?: BigDecimal.ZERO
             val prevWeekAmount = prevWeekMap[typeName]?.values?.sumOf { it } ?: BigDecimal.ZERO
@@ -159,20 +189,76 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
             )
         }
 
+        val yearTasks = buildTaskMap(thisYear)
+        val allTasks = buildTaskMap(expenses)
+        val taskYearTotal = yearTasks.values.sumOf { it.values.sumOf { v -> v } }
+        val taskAllTotal = allTasks.values.sumOf { it.values.sumOf { v -> v } }
+        val taskRows = allTasks.map { (task, byType) ->
+            val yearAmount = yearTasks[task]?.values?.sumOf { it } ?: BigDecimal.ZERO
+            val allAmount = byType.values.sumOf { it }
+            TaskRow(
+                taskName = task,
+                thisYearAmount = yearAmount,
+                allTimeAmount = allAmount,
+                thisYearPercent = percent(yearAmount, taskYearTotal),
+                allTimePercent = percent(allAmount, taskAllTotal),
+                labourTypes = byType.keys.filter { it.isNotEmpty() }.sorted().map { type ->
+                    TaskLabourRow(type, yearTasks[task]?.get(type) ?: BigDecimal.ZERO, byType.getValue(type))
+                },
+                isExpanded = expandedTypes.contains(TASK_KEY_PREFIX + task)
+            )
+        }.sortedWith(compareBy<TaskRow>({ it.taskName == OVERTIME_NO_TASK || it.taskName == NO_TASK })
+            .thenByDescending { it.allTimeAmount }
+            .thenBy { it.taskName })
+
         return ExpenseTypeSummaryUiState(
             rows = rows,
             thisWeekTotal = weekTotal,
             thisYearTotal = yearTotal,
             allTimeTotal = allTotal,
+            taskRows = taskRows,
+            taskThisYearTotal = taskYearTotal,
+            taskAllTimeTotal = taskAllTotal,
             isLoading = false,
             error = null
         )
     }
 
-    /** typeName -> (subtypeName -> total). Entries without a subtype are keyed by "". */
+    /**
+     * task -> (labour type -> wages + overtime). Overtime entered for the whole day has no task and
+     * goes to [OVERTIME_NO_TASK]; labour saved without worker groups goes to [NO_TASK] (keyed by ""),
+     * so the table adds up to the Labour total.
+     */
+    private fun buildTaskMap(expenses: List<DailyExpense>): Map<String, Map<String, BigDecimal>> {
+        val result = LinkedHashMap<String, MutableMap<String, BigDecimal>>()
+        fun add(task: String, type: String, amount: BigDecimal) {
+            if (amount.signum() != 0) result.getOrPut(task) { LinkedHashMap() }.merge(type, amount, BigDecimal::add)
+        }
+        expenses.forEach { expense ->
+            var wages = BigDecimal.ZERO
+            var overtime = BigDecimal.ZERO
+            parseWorkerGroups(expense.workerGroups).forEach { group ->
+                val groupWages = group.wagePerDay.multiply(BigDecimal(group.count))
+                val groupOvertime = group.calculateTotalGroupCost().subtract(groupWages)
+                wages = wages.add(groupWages)
+                overtime = overtime.add(groupOvertime)
+                add(group.taskPerformed.trim().ifEmpty { NO_TASK }, group.workerTypeName.ifBlank { OTHER_LABOUR },
+                    groupWages.add(groupOvertime))
+            }
+            add(NO_TASK, "", expense.totalLaborCost.subtract(wages))
+            add(OVERTIME_NO_TASK, "", expense.totalOvertimeCost.subtract(overtime))
+        }
+        return result
+    }
+
+    /**
+     * typeName -> (subtypeName -> total). Entries without a subtype are keyed by "".
+     * Labour is listed under [LABOUR] by labour type, with overtime as its own line.
+     */
     private fun buildTypeMap(expenses: List<DailyExpense>): Map<String, Map<String, BigDecimal>> {
         val result = LinkedHashMap<String, MutableMap<String, BigDecimal>>()
         expenses.forEach { expense ->
+            addLabour(expense, result)
             parseOtherExpenses(expense.otherExpenses).forEach { entry ->
                 val subtypeName = entry.subtypeName?.takeIf { it.isNotBlank() } ?: ""
                 val typeMap = result.getOrPut(entry.typeName) { LinkedHashMap() }
@@ -180,6 +266,31 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
             }
         }
         return result
+    }
+
+    private fun addLabour(expense: DailyExpense, result: MutableMap<String, MutableMap<String, BigDecimal>>) {
+        fun add(subtype: String, amount: BigDecimal) {
+            if (amount.signum() != 0) result.getOrPut(LABOUR) { LinkedHashMap() }.merge(subtype, amount, BigDecimal::add)
+        }
+        val groups = parseWorkerGroups(expense.workerGroups)
+        var wagesByType = BigDecimal.ZERO
+        groups.forEach { group ->
+            val wages = group.wagePerDay.multiply(BigDecimal(group.count))
+            wagesByType = wagesByType.add(wages)
+            add(group.workerTypeName.ifBlank { OTHER_LABOUR }, wages)
+        }
+        // Labour saved without worker groups (older records) is still counted.
+        add(OTHER_LABOUR, expense.totalLaborCost.subtract(wagesByType))
+        add(OVERTIME, expense.totalOvertimeCost)
+    }
+
+    private fun parseWorkerGroups(json: String): List<WorkerGroupEntry> {
+        return try {
+            if (json.isBlank() || json == "[]") emptyList()
+            else Json.decodeFromString(ListSerializer(WorkerGroupEntry.serializer()), json)
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     private fun parseOtherExpenses(json: String): List<OtherExpenseEntry> {
@@ -203,5 +314,14 @@ class ExpenseTypeSummaryViewModel @Inject constructor(
             current < previous -> TrendDirection.DOWN
             else -> TrendDirection.NEUTRAL
         }
+    }
+
+    companion object {
+        const val LABOUR = "Labour"
+        const val OVERTIME = "Overtime"
+        const val OTHER_LABOUR = "Other labour"
+        const val NO_TASK = "No task recorded"
+        const val OVERTIME_NO_TASK = "Overtime (no task)"
+        private const val TASK_KEY_PREFIX = "task:"
     }
 }
