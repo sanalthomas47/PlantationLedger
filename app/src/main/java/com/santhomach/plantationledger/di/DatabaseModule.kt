@@ -10,6 +10,8 @@ import com.santhomach.plantationledger.data.backup.BackupStore
 import com.santhomach.plantationledger.data.backup.DailyBackupManager
 import com.santhomach.plantationledger.data.export.ExportManager
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
+import com.santhomach.plantationledger.data.schedule.ScheduleDatabase
+import com.santhomach.plantationledger.data.schedule.ScheduleRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,8 +39,17 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideExportManager(@ApplicationContext context: Context): ExportManager {
-        return ExportManager(context)
+    fun provideExportManager(
+        @ApplicationContext context: Context,
+        scheduleRepository: ScheduleRepository
+    ): ExportManager {
+        return ExportManager(context) { scheduleRepository }
+    }
+
+    @Provides
+    @Singleton
+    fun provideScheduleRepository(@ApplicationContext context: Context): ScheduleRepository {
+        return ScheduleRepository(ScheduleDatabase.getInstance(context).scheduleDao())
     }
 
     @Provides
