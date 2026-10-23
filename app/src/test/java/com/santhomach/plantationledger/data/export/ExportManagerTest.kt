@@ -14,7 +14,12 @@ import com.santhomach.plantationledger.data.model.WeeklySettlement
 import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerPayment
 import com.santhomach.plantationledger.data.model.WorkerType
+import com.santhomach.plantationledger.data.schedule.CombinationCard
+import com.santhomach.plantationledger.data.schedule.ScheduleRepository
+import com.santhomach.plantationledger.data.schedule.ScheduleTask
+import com.santhomach.plantationledger.data.schedule.TaskCompletion
 import com.santhomach.plantationledger.testutil.FakeDatabase
+import com.santhomach.plantationledger.testutil.FakeScheduleDao
 import com.santhomach.plantationledger.testutil.dailyExpense
 import com.santhomach.plantationledger.testutil.group
 import com.santhomach.plantationledger.testutil.money
@@ -27,6 +32,7 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.junit.After
@@ -65,13 +71,32 @@ class ExportManagerTest {
     /** A device: its own files folder and database. */
     private class Device(val filesDir: File) {
         val fake = FakeDatabase().apply { stubTransactions() }
+        val schedule = FakeScheduleDao()
         val context: Context = mockk(relaxed = true) { every { filesDir } returns this@Device.filesDir }
         val manager: ExportManager
 
         init {
             every { AppDatabase.getInstance(context) } returns fake.db
-            manager = ExportManager(context)
+            manager = ExportManager(context) { ScheduleRepository(schedule) }
         }
+    }
+
+    private fun FakeScheduleDao.fillWithSchedule() {
+        tasks.value = listOf(
+            ScheduleTask(id = 1, month = 5, title = "1st fertilizer round", sortOrder = 0, createdAt = "2026-01-01T00:00"),
+            ScheduleTask(id = 2, month = 10, title = "Harvest rounds", sortOrder = 0, createdAt = "2026-01-01T00:00")
+        )
+        completions.value = listOf(
+            TaskCompletion(taskId = 1, year = 2026, completedAt = "2026-05-10T08:00"),
+            TaskCompletion(taskId = 1, year = 2025, completedAt = "2025-05-12T08:00")
+        )
+        cards.value = listOf(
+            CombinationCard(id = 1, category = "FOLIAR", name = "Micronutrient", purpose = "Zinc deficiency",
+                combination = "Zinc sulphate 0.25%\n+ Boron 0.1%", usage = "Spray twice, 30 days apart",
+                comments = "മഴ ഇല്ലാത്ത ദിവസം", createdAt = "2026-02-01T00:00", updatedAt = "2026-02-02T00:00"),
+            CombinationCard(id = 2, category = "PESTICIDE", name = "Thrips", createdAt = "2026-03-01T00:00",
+                updatedAt = "2026-03-01T00:00")
+        )
     }
 
     private fun device(name: String) = Device(tmp.newFolder(name))
@@ -141,13 +166,83 @@ class ExportManagerTest {
     }
 
     @Test
+    fun theScheduleIsBackedUpAndRestoredExactly() = runTest {
+        val phone = device("phone")
+        fillWithOneOfEverything(phone.fake, "")
+        phone.schedule.fillWithSchedule()
+        val json = phone.manager.exportToJson()
+
+        val newPhone = device("newPhone")
+        // A new phone starts with its own calendar; restoring replaces it with the backup's.
+        newPhone.schedule.tasks.value = listOf(ScheduleTask(id = 1, month = 1, title = "Seeded task"),
+            ScheduleTask(id = 9, month = 3, title = "Another seeded task"))
+        newPhone.manager.importFromJson(json)
+
+        assertEquals(phone.schedule.allTasks(), newPhone.schedule.allTasks())
+        assertEquals(phone.schedule.allCompletions().toSet(), newPhone.schedule.allCompletions().toSet())
+        assertEquals(phone.schedule.allCards(), newPhone.schedule.allCards())
+        assertEquals(1, newPhone.fake.expenses.all().size)
+    }
+
+    @Test
+    fun anOlderBackupWithoutAScheduleLeavesThePhonesScheduleAlone() = runTest {
+        val old = device("old")
+        fillWithOneOfEverything(old.fake, "")
+        val json = old.manager.exportToJson()
+            .let { Json.parseToJsonElement(it).jsonObject }
+            .let { JsonObject(it - "schedule").toString() }           // as written before the Schedule existed
+
+        val phone = device("phone")
+        phone.schedule.fillWithSchedule()
+        val before = phone.schedule.allCards()
+
+        phone.manager.importFromJson(json)
+
+        assertEquals(before, phone.schedule.allCards())
+        assertEquals(2, phone.schedule.allTasks().size)
+        assertEquals(2, phone.schedule.allCompletions().size)
+    }
+
+    @Test
+    fun aFailedImportDoesNotTouchTheSchedule() = runTest {
+        val phone = device("phone")
+        phone.schedule.fillWithSchedule()
+        val tasks = phone.schedule.allTasks()
+
+        runCatching { phone.manager.importFromJson("{ not json") }
+
+        assertEquals(tasks, phone.schedule.allTasks())
+    }
+
+    @Test
+    fun ticksForTasksMissingFromTheBackupAreDropped() = runTest {
+        val json = """
+            {"export_date":"2026-10-23T10:00","daily_expenses":[],"weekly_settlements":[],
+             "excess_balances":[],"expense_types":[],"expense_subtypes":[],"income_types":[],
+             "worker_types":[],"permanent_workers":[],"work_tasks":[],"worker_payments":[],
+             "weekly_funds":[],
+             "schedule":{"tasks":[{"id":4,"month":6,"title":"Trashing"}],
+                         "task_completions":[{"taskId":4,"year":2026},{"taskId":77,"year":2026}],
+                         "combination_cards":[]}}
+        """.trimIndent()
+        val phone = device("phone")
+        phone.schedule.fillWithSchedule()
+
+        phone.manager.importFromJson(json)
+
+        assertEquals(listOf("Trashing"), phone.schedule.allTasks().map { it.title })
+        assertEquals(listOf(4), phone.schedule.allCompletions().map { it.taskId })
+        assertTrue(phone.schedule.allCards().isEmpty())
+    }
+
+    @Test
     fun theExportUsesTheDocumentedKeys() = runTest {
         val phone = device("phone")
         fillWithOneOfEverything(phone.fake, "")
         val root = Json.parseToJsonElement(phone.manager.exportToJson()).jsonObject
         listOf("export_date", "daily_expenses", "weekly_settlements", "excess_balances", "expense_types",
             "expense_subtypes", "income_types", "worker_types", "permanent_workers", "work_tasks",
-            "worker_payments", "weekly_funds", "vendor_payments", "receipts"
+            "worker_payments", "weekly_funds", "vendor_payments", "receipts", "schedule"
         ).forEach { key -> assertTrue("missing $key", key in root) }
         assertEquals(1, root.getValue("vendor_payments").jsonArray.size)
     }
