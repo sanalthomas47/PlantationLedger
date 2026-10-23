@@ -21,6 +21,9 @@ import com.santhomach.plantationledger.data.model.WeeklySettlement
 import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerPayment
 import com.santhomach.plantationledger.data.model.WorkerType
+import com.santhomach.plantationledger.data.schedule.ScheduleDatabase
+import com.santhomach.plantationledger.data.schedule.ScheduleExport
+import com.santhomach.plantationledger.data.schedule.ScheduleRepository
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -63,7 +66,10 @@ data class ExportData(
     @SerialName("vendor_payments")
     val vendorPayments: List<VendorPayment> = emptyList(),
     @SerialName("receipts")
-    val receipts: List<ExportReceipt> = emptyList()
+    val receipts: List<ExportReceipt> = emptyList(),
+    /** Monthly checklist and combination cards; absent in backups made before the Schedule existed. */
+    @SerialName("schedule")
+    val schedule: ScheduleExport? = null
 )
 
 /**
@@ -80,9 +86,15 @@ class ExportException(message: String, cause: Throwable? = null) : Exception(mes
 /**
  * Exports the whole database (plus receipt images) to JSON and imports it back.
  */
-class ExportManager(private val context: Context) {
+class ExportManager(
+    private val context: Context,
+    scheduleRepository: () -> ScheduleRepository = {
+        ScheduleRepository(ScheduleDatabase.getInstance(context).scheduleDao())
+    }
+) {
 
     private val database: AppDatabase = AppDatabase.getInstance(context)
+    private val schedule: ScheduleRepository by lazy(scheduleRepository)
 
     private val json = Json {
         prettyPrint = true
@@ -138,7 +150,8 @@ class ExportManager(private val context: Context) {
                 workerPayments = workerPayments,
                 weeklyFunds = weeklyFunds,
                 vendorPayments = vendorPayments,
-                receipts = receipts
+                receipts = receipts,
+                schedule = schedule.snapshot()
             )
 
             return json.encodeToString(ExportData.serializer(), exportData)
@@ -208,6 +221,10 @@ class ExportManager(private val context: Context) {
             val backupMissingVendorPayments = exportData.vendorPayments.isEmpty() && liveVendorPaymentCount > 0
 
             importDataSequentially(exportData)
+
+            // The Schedule has its own database. It is restored after the expense data succeeds,
+            // and only when the backup contains one; older backups leave it as it is.
+            exportData.schedule?.let { schedule.replaceAll(it) }
 
             return if (backupMissingVendorPayments) {
                 "Import complete. Note: this backup was created before vendor payment tracking was " +
