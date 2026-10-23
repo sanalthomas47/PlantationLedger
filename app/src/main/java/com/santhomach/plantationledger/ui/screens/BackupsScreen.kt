@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -213,7 +212,9 @@ fun BackupsScreen(
                     "${formatTime(backup.createdAtMillis)} (${kindLabel(backup.kind)})\n\n" +
                         "Your current data is exported to Downloads first, so nothing is lost.\n\n" +
                         "Every record in the backup replaces the same record in the app. " +
-                        "Entries added after the backup was made are kept."
+                        "Entries added after the backup was made are kept.\n\n" +
+                        "The Schedule (monthly checklist and combination cards) is replaced " +
+                        "with the backup's, if the backup has one."
                 )
             },
             confirmButton = {
