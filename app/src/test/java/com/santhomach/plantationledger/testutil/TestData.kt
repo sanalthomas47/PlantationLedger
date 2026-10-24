@@ -57,7 +57,14 @@ fun group(
     comments = comments
 )
 
-fun other(type: String, amount: Number, subtype: String? = null, paid: Boolean = false, quantity: Double = 1.0, typeId: Int = 1) =
+fun other(
+    type: String,
+    amount: Number,
+    subtype: String? = null,
+    paid: Boolean = false,
+    quantity: Double = 1.0,
+    typeId: Int = 1
+) =
     OtherExpenseEntry(
         expenseTypeId = typeId,
         typeName = type,
@@ -89,7 +96,10 @@ fun dailyExpense(
     workerGroups = Json.encodeToString(ListSerializer(WorkerGroupEntry.serializer()), groups),
     totalLaborCost = groups.fold(BigDecimal.ZERO) { a, g -> a.add(g.wagePerDay.multiply(BigDecimal(g.count))) },
     totalOvertimeCost = groups.fold(BigDecimal.ZERO) { a, g ->
-        a.add(g.overtimeWagePerHour.multiply(BigDecimal(g.overtimeHours)).multiply(BigDecimal(g.count)))
+        a.add(
+            g.overtimeWagePerHour.multiply(BigDecimal(g.overtimeHours))
+                .multiply(BigDecimal(g.count))
+        )
     },
     otherExpenses = Json.encodeToString(ListSerializer(OtherExpenseEntry.serializer()), others),
     totalOtherExpensesCost = others.fold(BigDecimal.ZERO) { a, o -> a.add(o.amount) },

@@ -98,44 +98,72 @@ class FakeDatabase {
             expenses.all().sortedByDescending { it.date }.take(firstArg())
         }
         coEvery { dailyDao.getByDateRange(any(), any()) } answers {
-            expenses.all().filter { it.date >= firstArg<String>() && it.date <= secondArg<String>() }
+            expenses.all()
+                .filter { it.date >= firstArg<String>() && it.date <= secondArg<String>() }
                 .sortedBy { it.date }
         }
         every { dailyDao.getByDateRangeFlow(any(), any()) } answers {
             val start = firstArg<String>()
             val end = secondArg<String>()
-            expenses.flow().map { list -> list.filter { it.date in start..end }.sortedBy { it.date } }
+            expenses.flow()
+                .map { list -> list.filter { it.date in start..end }.sortedBy { it.date } }
         }
         every { db.dailyExpenseDao() } returns dailyDao
 
         val typeDao = mockk<ExpenseTypeDao>(relaxed = true)
-        coEvery { typeDao.insert(any()) } answers { write("expense_types"); expenseTypes.insert(firstArg()) }
+        coEvery { typeDao.insert(any()) } answers {
+            write("expense_types"); expenseTypes.insert(
+            firstArg()
+        )
+        }
         coEvery { typeDao.getAll() } answers { expenseTypes.all() }
         coEvery { typeDao.getAllActive() } answers { expenseTypes.all().filter { it.isActive } }
         every { db.expenseTypeDao() } returns typeDao
 
         val subtypeDao = mockk<ExpenseSubtypeDao>(relaxed = true)
-        coEvery { subtypeDao.insert(any()) } answers { write("expense_subtypes"); expenseSubtypes.insert(firstArg()) }
+        coEvery { subtypeDao.insert(any()) } answers {
+            write("expense_subtypes"); expenseSubtypes.insert(
+            firstArg()
+        )
+        }
         coEvery { subtypeDao.getAll() } answers { expenseSubtypes.all() }
-        coEvery { subtypeDao.getAllActive() } answers { expenseSubtypes.all().filter { it.isActive } }
+        coEvery { subtypeDao.getAllActive() } answers {
+            expenseSubtypes.all().filter { it.isActive }
+        }
         every { db.expenseSubtypeDao() } returns subtypeDao
 
         val incomeDao = mockk<IncomeTypeDao>(relaxed = true)
-        coEvery { incomeDao.insert(any()) } answers { write("income_types"); incomeTypes.insert(firstArg()) }
+        coEvery { incomeDao.insert(any()) } answers {
+            write("income_types"); incomeTypes.insert(
+            firstArg()
+        )
+        }
         coEvery { incomeDao.getAll() } answers { incomeTypes.all() }
         coEvery { incomeDao.getAllActive() } answers { incomeTypes.all().filter { it.isActive } }
         every { db.incomeTypeDao() } returns incomeDao
 
         val workerTypeDao = mockk<WorkerTypeDao>(relaxed = true)
-        coEvery { workerTypeDao.insert(any()) } answers { write("worker_types"); workerTypes.insert(firstArg()) }
+        coEvery { workerTypeDao.insert(any()) } answers {
+            write("worker_types"); workerTypes.insert(
+            firstArg()
+        )
+        }
         coEvery { workerTypeDao.getAll() } answers { workerTypes.all() }
-        coEvery { workerTypeDao.getAllActive() } answers { workerTypes.all().filter { it.isActive } }
+        coEvery { workerTypeDao.getAllActive() } answers {
+            workerTypes.all().filter { it.isActive }
+        }
         every { db.workerTypeDao() } returns workerTypeDao
 
         val permanentDao = mockk<PermanentWorkerDao>(relaxed = true)
-        coEvery { permanentDao.insert(any()) } answers { write("permanent_workers"); permanentWorkers.insert(firstArg()) }
+        coEvery { permanentDao.insert(any()) } answers {
+            write("permanent_workers"); permanentWorkers.insert(
+            firstArg()
+        )
+        }
         coEvery { permanentDao.getAll() } answers { permanentWorkers.all() }
-        coEvery { permanentDao.getAllActive() } answers { permanentWorkers.all().filter { it.isActive } }
+        coEvery { permanentDao.getAllActive() } answers {
+            permanentWorkers.all().filter { it.isActive }
+        }
         every { db.permanentWorkerDao() } returns permanentDao
 
         val taskDao = mockk<WorkTaskDao>(relaxed = true)
@@ -145,28 +173,52 @@ class FakeDatabase {
         every { db.workTaskDao() } returns taskDao
 
         val settlementDao = mockk<WeeklySettlementDao>(relaxed = true)
-        coEvery { settlementDao.insert(any()) } answers { write("weekly_settlements"); settlements.insert(firstArg()) }
+        coEvery { settlementDao.insert(any()) } answers {
+            write("weekly_settlements"); settlements.insert(
+            firstArg()
+        )
+        }
         coEvery { settlementDao.getRecent(any()) } answers { settlements.all().take(firstArg()) }
         every { db.weeklySettlementDao() } returns settlementDao
 
         val balanceDao = mockk<ExcessBalanceDao>(relaxed = true)
-        coEvery { balanceDao.insert(any()) } answers { write("excess_balances"); excessBalances.insert(firstArg()) }
+        coEvery { balanceDao.insert(any()) } answers {
+            write("excess_balances"); excessBalances.insert(
+            firstArg()
+        )
+        }
         coEvery { balanceDao.getByDateRange(any(), any()) } answers { excessBalances.all() }
         every { db.excessBalanceDao() } returns balanceDao
 
         val paymentDao = mockk<WorkerPaymentDao>(relaxed = true)
-        coEvery { paymentDao.insert(any()) } answers { write("worker_payments"); workerPayments.insert(firstArg()) }
+        coEvery { paymentDao.insert(any()) } answers {
+            write("worker_payments"); workerPayments.insert(
+            firstArg()
+        )
+        }
         coEvery { paymentDao.getAll() } answers { workerPayments.all() }
         every { db.workerPaymentDao() } returns paymentDao
 
         val fundsDao = mockk<WeeklyFundsDao>(relaxed = true)
-        coEvery { fundsDao.insert(any()) } answers { write("weekly_funds"); weeklyFunds.insert(firstArg()) }
+        coEvery { fundsDao.insert(any()) } answers {
+            write("weekly_funds"); weeklyFunds.insert(
+            firstArg()
+        )
+        }
         coEvery { fundsDao.getAll() } answers { weeklyFunds.all() }
         every { db.weeklyFundsDao() } returns fundsDao
 
         val vendorDao = mockk<VendorPaymentDao>(relaxed = true)
-        coEvery { vendorDao.insert(any()) } answers { write("vendor_payments"); vendorPayments.insert(firstArg()) }
-        coEvery { vendorDao.delete(any()) } answers { write("vendor_payments"); vendorPayments.delete(firstArg()) }
+        coEvery { vendorDao.insert(any()) } answers {
+            write("vendor_payments"); vendorPayments.insert(
+            firstArg()
+        )
+        }
+        coEvery { vendorDao.delete(any()) } answers {
+            write("vendor_payments"); vendorPayments.delete(
+            firstArg()
+        )
+        }
         coEvery { vendorDao.getAll() } answers { vendorPayments.all() }
         every { db.vendorPaymentDao() } returns vendorDao
     }

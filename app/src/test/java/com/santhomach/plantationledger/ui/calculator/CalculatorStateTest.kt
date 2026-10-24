@@ -92,13 +92,18 @@ class CalculatorStateTest {
         assertEquals("1.25", press("1..25").expression)          // a second point is ignored
         assertEquals("12", press("123<").expression)
         assertEquals("12", press("12+<").expression)
-        assertEquals("", press("150+20=<").expression)            // backspace after a result clears it
+        assertEquals(
+            "",
+            press("150+20=<").expression
+        )            // backspace after a result clears it
     }
 
     @Test
     fun leadingZeroIsReplacedAndVeryLongNumbersAreCapped() {
         assertEquals("7", press("07").expression.replace(",", ""))
-        assertEquals(CalculatorState.MAX_DIGITS, press("1".repeat(20)).expression.count { it.isDigit() })
+        assertEquals(
+            CalculatorState.MAX_DIGITS,
+            press("1".repeat(20)).expression.count { it.isDigit() })
     }
 
     @Test

@@ -23,12 +23,16 @@ class FakeScheduleDao(
     private var nextTaskId = (tasks.maxOfOrNull { it.id } ?: 0) + 1
     private var nextCardId = (cards.maxOfOrNull { it.id } ?: 0) + 1
 
-    private fun List<ScheduleTask>.orderedTasks() = sortedWith(compareBy({ it.month }, { it.sortOrder }, { it.id }))
-    private fun List<CombinationCard>.orderedCards() = sortedWith(compareBy({ it.sortOrder }, { it.id }))
+    private fun List<ScheduleTask>.orderedTasks() =
+        sortedWith(compareBy({ it.month }, { it.sortOrder }, { it.id }))
+
+    private fun List<CombinationCard>.orderedCards() =
+        sortedWith(compareBy({ it.sortOrder }, { it.id }))
 
     override fun tasksFlow(): Flow<List<ScheduleTask>> = tasks.map { it.orderedTasks() }
     override suspend fun allTasks() = tasks.value.orderedTasks()
-    override suspend fun nextTaskOrder(month: Int) = (tasks.value.filter { it.month == month }.maxOfOrNull { it.sortOrder } ?: -1) + 1
+    override suspend fun nextTaskOrder(month: Int) =
+        (tasks.value.filter { it.month == month }.maxOfOrNull { it.sortOrder } ?: -1) + 1
 
     override suspend fun insertTask(task: ScheduleTask): Long {
         val id = if (task.id == 0) nextTaskId++ else task.id
@@ -45,20 +49,27 @@ class FakeScheduleDao(
         completions.value = completions.value.filterNot { it.taskId == task.id }
     }
 
-    override fun completionsFlow(year: Int) = completions.map { list -> list.filter { it.year == year } }
+    override fun completionsFlow(year: Int) =
+        completions.map { list -> list.filter { it.year == year } }
+
     override suspend fun allCompletions() = completions.value
 
     override suspend fun insertCompletion(completion: TaskCompletion) {
         require(tasks.value.any { it.id == completion.taskId }) { "FOREIGN KEY constraint failed" }
-        completions.value = completions.value.filterNot { it.taskId == completion.taskId && it.year == completion.year } + completion
+        completions.value =
+            completions.value.filterNot { it.taskId == completion.taskId && it.year == completion.year } + completion
     }
 
     override suspend fun deleteCompletion(taskId: Int, year: Int) {
         completions.value = completions.value.filterNot { it.taskId == taskId && it.year == year }
     }
 
-    override fun cardsFlow(category: String) = cards.map { list -> list.filter { it.category == category }.orderedCards() }
-    override suspend fun allCards() = cards.value.sortedWith(compareBy({ it.category }, { it.sortOrder }, { it.id }))
+    override fun cardsFlow(category: String) =
+        cards.map { list -> list.filter { it.category == category }.orderedCards() }
+
+    override suspend fun allCards() =
+        cards.value.sortedWith(compareBy({ it.category }, { it.sortOrder }, { it.id }))
+
     override suspend fun card(id: Int) = cards.value.firstOrNull { it.id == id }
     override suspend fun nextCardOrder(category: String) =
         (cards.value.filter { it.category == category }.maxOfOrNull { it.sortOrder } ?: -1) + 1
@@ -77,9 +88,17 @@ class FakeScheduleDao(
         cards.value = cards.value.filterNot { it.id == card.id }
     }
 
-    override suspend fun clearCompletions() { completions.value = emptyList() }
-    override suspend fun clearTasks() { tasks.value = emptyList() }
-    override suspend fun clearCards() { cards.value = emptyList() }
+    override suspend fun clearCompletions() {
+        completions.value = emptyList()
+    }
+
+    override suspend fun clearTasks() {
+        tasks.value = emptyList()
+    }
+
+    override suspend fun clearCards() {
+        cards.value = emptyList()
+    }
 
     override suspend fun insertTasks(tasks: List<ScheduleTask>) {
         val ids = tasks.map { it.id }.toSet()
