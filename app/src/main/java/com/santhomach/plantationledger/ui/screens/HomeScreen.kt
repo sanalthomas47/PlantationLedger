@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
@@ -44,7 +45,6 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -131,6 +131,7 @@ fun HomeScreen(
     onNavigateToExpenseTypeSummary: () -> Unit = {},
     onNavigateToVendorLedger: () -> Unit = {},
     onNavigateToWeeklyBalance: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {},
     viewModel: ReportsViewModel? = null
 ) {
     if (LocalInspectionMode.current && viewModel == null) {
@@ -266,7 +267,8 @@ fun HomeScreen(
         },
         onLongPressExpense = { expenseToClone = it },
         onNavigateToVendorLedger = onNavigateToVendorLedger,
-        onNavigateToWeeklyBalance = onNavigateToWeeklyBalance
+        onNavigateToWeeklyBalance = onNavigateToWeeklyBalance,
+        onNavigateToSchedule = onNavigateToSchedule
     )
 }
 
@@ -292,7 +294,8 @@ fun HomeScreenContent(
     onViewExpense: (DailyExpense) -> Unit = {},
     onLongPressExpense: (DailyExpense) -> Unit = {},
     onNavigateToVendorLedger: () -> Unit = {},
-    onNavigateToWeeklyBalance: () -> Unit = {}
+    onNavigateToWeeklyBalance: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {}
 ) {
     // Open / closed state of each year ("2026") and month ("2026-10") the user has tapped.
     val expanded = rememberSaveable(saver = expandedSaver) { mutableStateMapOf<String, Boolean>() }
@@ -365,7 +368,7 @@ fun HomeScreenContent(
 
                 item {
                     QuickActionsSection(
-                        onAddToday = { onNavigateToExpenseEntry(LocalDate.now(), null) },
+                        onSchedule = onNavigateToSchedule,
                         onAddForDate = onShowDatePicker,
                         onReports = onNavigateToReports,
                         onPayments = onNavigateToPayments,
@@ -654,7 +657,7 @@ private fun StatItem(label: String, value: String, color: Color, icon: ImageVect
 
 @Composable
 private fun QuickActionsSection(
-    onAddToday: () -> Unit,
+    onSchedule: () -> Unit,
     onAddForDate: () -> Unit,
     onReports: () -> Unit,
     onPayments: () -> Unit,
@@ -676,7 +679,7 @@ private fun QuickActionsSection(
             )
             Spacer(modifier = Modifier.height(14.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton("Add Today", Icons.Default.Today, Color(0xFF1D7A4D), Modifier.weight(1f), onAddToday)
+                QuickActionButton("Schedule", Icons.Default.Checklist, Color(0xFF1D7A4D), Modifier.weight(1f), onSchedule)
                 QuickActionButton("By Date", Icons.Default.CalendarMonth, Color(0xFF155FC0), Modifier.weight(1f), onAddForDate)
                 QuickActionButton("Reports", Icons.Default.BarChart, Color(0xFF6A3E9A), Modifier.weight(1f), onReports)
             }

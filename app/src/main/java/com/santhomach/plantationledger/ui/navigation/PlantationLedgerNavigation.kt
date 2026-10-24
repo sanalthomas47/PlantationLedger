@@ -8,17 +8,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.santhomach.plantationledger.ui.screens.BackupsScreen
+import com.santhomach.plantationledger.ui.screens.CombinationCardScreen
 import com.santhomach.plantationledger.ui.screens.CsvImportScreen
 import com.santhomach.plantationledger.ui.screens.DailyExpenseScreen
 import com.santhomach.plantationledger.ui.screens.ExpenseTypeSummaryScreen
 import com.santhomach.plantationledger.ui.screens.HomeScreen
 import com.santhomach.plantationledger.ui.screens.ReportsScreen
+import com.santhomach.plantationledger.ui.screens.ScheduleScreen
 import com.santhomach.plantationledger.ui.screens.SearchScreen
 import com.santhomach.plantationledger.ui.screens.SettingsScreen
 import com.santhomach.plantationledger.ui.screens.VendorLedgerScreen
 import com.santhomach.plantationledger.ui.screens.WeeklyBalanceScreen
 import com.santhomach.plantationledger.ui.screens.WeeklyFundsScreen
 import com.santhomach.plantationledger.ui.screens.WorkerPaymentScreen
+import com.santhomach.plantationledger.ui.viewmodel.CombinationCardViewModel
 import java.time.LocalDate
 
 sealed class Screen(val route: String) {
@@ -37,6 +40,10 @@ sealed class Screen(val route: String) {
 
     object Settings : Screen("settings")
     object Backups : Screen("backups")
+    object Schedule : Screen("schedule")
+    object ScheduleCard : Screen("schedule_card/{cardId}") {
+        fun createRoute(cardId: Int): String = "schedule_card/$cardId"
+    }
     object Payments : Screen("payments")
     object WeeklyFunds : Screen("weekly_funds")
     object Search : Screen("search")
@@ -61,6 +68,7 @@ fun PlantationLedgerNavigation(
                 },
                 onNavigateToReports = { navController.navigate(Screen.Reports.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToSchedule = { navController.navigate(Screen.Schedule.route) },
                 onNavigateToPayments = { navController.navigate(Screen.Payments.route) },
                 onNavigateToWeeklyFunds = { navController.navigate(Screen.WeeklyFunds.route) },
                 onNavigateToSearch = { navController.navigate(Screen.Search.route) },
@@ -131,6 +139,20 @@ fun PlantationLedgerNavigation(
 
         composable(Screen.Backups.route) {
             BackupsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Schedule.route) {
+            ScheduleScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenCard = { id -> navController.navigate(Screen.ScheduleCard.createRoute(id)) }
+            )
+        }
+
+        composable(
+            route = Screen.ScheduleCard.route,
+            arguments = listOf(navArgument(CombinationCardViewModel.CARD_ID) { type = NavType.IntType })
+        ) {
+            CombinationCardScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.CsvImport.route) {
