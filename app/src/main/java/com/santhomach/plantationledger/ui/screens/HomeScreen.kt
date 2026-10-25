@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Balance
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
@@ -43,6 +44,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -132,6 +134,8 @@ fun HomeScreen(
     onNavigateToVendorLedger: () -> Unit = {},
     onNavigateToWeeklyBalance: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
+    onNavigateToIncomeBreakdown: () -> Unit = {},
+    onNavigateToEfficiency: () -> Unit = {},
     viewModel: ReportsViewModel? = null
 ) {
     if (LocalInspectionMode.current && viewModel == null) {
@@ -268,7 +272,9 @@ fun HomeScreen(
         onLongPressExpense = { expenseToClone = it },
         onNavigateToVendorLedger = onNavigateToVendorLedger,
         onNavigateToWeeklyBalance = onNavigateToWeeklyBalance,
-        onNavigateToSchedule = onNavigateToSchedule
+        onNavigateToSchedule = onNavigateToSchedule,
+        onNavigateToIncomeBreakdown = onNavigateToIncomeBreakdown,
+        onNavigateToEfficiency = onNavigateToEfficiency
     )
 }
 
@@ -295,7 +301,9 @@ fun HomeScreenContent(
     onLongPressExpense: (DailyExpense) -> Unit = {},
     onNavigateToVendorLedger: () -> Unit = {},
     onNavigateToWeeklyBalance: () -> Unit = {},
-    onNavigateToSchedule: () -> Unit = {}
+    onNavigateToSchedule: () -> Unit = {},
+    onNavigateToIncomeBreakdown: () -> Unit = {},
+    onNavigateToEfficiency: () -> Unit = {}
 ) {
     // Open / closed state of each year ("2026") and month ("2026-10") the user has tapped.
     val expanded = rememberSaveable(saver = expandedSaver) { mutableStateMapOf<String, Boolean>() }
@@ -373,7 +381,9 @@ fun HomeScreenContent(
                         onReports = onNavigateToReports,
                         onPayments = onNavigateToPayments,
                         onWeekly = onNavigateToWeeklyFunds,
-                        onExpenseTypes = onNavigateToExpenseTypeSummary
+                        onExpenseTypes = onNavigateToExpenseTypeSummary,
+                        onIncome = onNavigateToIncomeBreakdown,
+                        onEfficiency = onNavigateToEfficiency
                     )
                 }
 
@@ -662,7 +672,9 @@ private fun QuickActionsSection(
     onReports: () -> Unit,
     onPayments: () -> Unit,
     onWeekly: () -> Unit,
-    onExpenseTypes: () -> Unit
+    onExpenseTypes: () -> Unit,
+    onIncome: () -> Unit,
+    onEfficiency: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -678,16 +690,19 @@ private fun QuickActionsSection(
                 style = MaterialTheme.typography.labelMedium
             )
             Spacer(modifier = Modifier.height(14.dp))
+            // Two rows of four; the 48dp tiles keep their size, only the gaps are smaller.
             Row(modifier = Modifier.fillMaxWidth()) {
                 QuickActionButton("Schedule", Icons.Default.Checklist, Color(0xFF1D7A4D), Modifier.weight(1f), onSchedule)
                 QuickActionButton("By Date", Icons.Default.CalendarMonth, Color(0xFF155FC0), Modifier.weight(1f), onAddForDate)
                 QuickActionButton("Reports", Icons.Default.BarChart, Color(0xFF6A3E9A), Modifier.weight(1f), onReports)
+                QuickActionButton("Payments", Icons.Default.Payments, Color(0xFFBF5B00), Modifier.weight(1f), onPayments)
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton("Payments", Icons.Default.Payments, Color(0xFFBF5B00), Modifier.weight(1f), onPayments)
                 QuickActionButton("Weekly", Icons.Default.ListAlt, Color(0xFF00695C), Modifier.weight(1f), onWeekly)
                 QuickActionButton("Breakdown", Icons.Default.PieChart, Color(0xFFC62828), Modifier.weight(1f), onExpenseTypes)
+                QuickActionButton("Income", Icons.Default.Savings, Color(0xFF8A5A00), Modifier.weight(1f), onIncome)
+                QuickActionButton("Efficiency", Icons.Default.Balance, Color(0xFF3949AB), Modifier.weight(1f), onEfficiency)
             }
         }
     }
@@ -705,7 +720,7 @@ private fun QuickActionButton(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = 2.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
