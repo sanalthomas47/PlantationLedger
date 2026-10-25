@@ -11,8 +11,10 @@ import com.santhomach.plantationledger.ui.screens.BackupsScreen
 import com.santhomach.plantationledger.ui.screens.CombinationCardScreen
 import com.santhomach.plantationledger.ui.screens.CsvImportScreen
 import com.santhomach.plantationledger.ui.screens.DailyExpenseScreen
+import com.santhomach.plantationledger.ui.screens.EfficiencyScreen
 import com.santhomach.plantationledger.ui.screens.ExpenseTypeSummaryScreen
 import com.santhomach.plantationledger.ui.screens.HomeScreen
+import com.santhomach.plantationledger.ui.screens.IncomeBreakdownScreen
 import com.santhomach.plantationledger.ui.screens.ReportsScreen
 import com.santhomach.plantationledger.ui.screens.ScheduleScreen
 import com.santhomach.plantationledger.ui.screens.SearchScreen
@@ -41,6 +43,8 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object Backups : Screen("backups")
     object Schedule : Screen("schedule")
+    object IncomeBreakdown : Screen("income_breakdown")
+    object Efficiency : Screen("income_vs_expense")
     object ScheduleCard : Screen("schedule_card/{cardId}") {
         fun createRoute(cardId: Int): String = "schedule_card/$cardId"
     }
@@ -69,6 +73,8 @@ fun PlantationLedgerNavigation(
                 onNavigateToReports = { navController.navigate(Screen.Reports.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToSchedule = { navController.navigate(Screen.Schedule.route) },
+                onNavigateToIncomeBreakdown = { navController.navigate(Screen.IncomeBreakdown.route) },
+                onNavigateToEfficiency = { navController.navigate(Screen.Efficiency.route) },
                 onNavigateToPayments = { navController.navigate(Screen.Payments.route) },
                 onNavigateToWeeklyFunds = { navController.navigate(Screen.WeeklyFunds.route) },
                 onNavigateToSearch = { navController.navigate(Screen.Search.route) },
@@ -139,6 +145,14 @@ fun PlantationLedgerNavigation(
 
         composable(Screen.Backups.route) {
             BackupsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.IncomeBreakdown.route) {
+            IncomeBreakdownScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Efficiency.route) {
+            EfficiencyScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.Schedule.route) {
