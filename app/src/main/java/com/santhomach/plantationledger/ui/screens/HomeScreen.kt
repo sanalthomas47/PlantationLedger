@@ -29,9 +29,10 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Attachment
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.ListAlt
@@ -84,6 +86,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -994,15 +997,36 @@ private fun EmptyStateCard(onClick: () -> Unit) {
 // Vendor outstanding
 // ---------------------------------------------------------------------------------------------
 
+/*
+ * Outstanding vendor bills are normal credit waiting to be settled, so they show in amber
+ * ("pending") rather than red, which the app keeps for a Short balance. Every text colour below
+ * was checked against its background: at least 6.5:1 in light mode and 9.6:1 in dark mode.
+ */
+private val VendorDueLightBg = Color(0xFFFFF4D6)
+private val VendorDueLightText = Color(0xFF7A4F00)
+private val VendorDueDarkBg = Color(0xFF3A2C0A)
+private val VendorDueDarkText = Color(0xFFFFD27A)
+private val VendorPaidLightBg = Color(0xFFE3F4E8)
+private val VendorPaidLightText = Color(0xFF1A5C38)
+private val VendorPaidDarkBg = Color(0xFF12301F)
+private val VendorPaidDarkText = Color(0xFFA8E6C1)
+
+/** "Paid on ..." lines in the day details dialog (unchanged). */
 private val VendorPaidGreen = Color(0xFF20B720)
-private val VendorPaidText = Color(0xFFE7EFE7)
-private val VendorDueRed = Color(0xFFB71C1C)
 
 @Composable
 private fun VendorOutstandingCard(ledger: VendorLedger, onNavigateToLedger: () -> Unit) {
     val allPaid = ledger.outstanding.signum() <= 0
-    val containerColor = if (allPaid) VendorPaidGreen.copy(alpha = 0.15f) else VendorDueRed.copy(alpha = 0.12f)
-    val textColor = if (allPaid) VendorPaidText else VendorDueRed
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val containerColor = when {
+        allPaid -> if (dark) VendorPaidDarkBg else VendorPaidLightBg
+        else -> if (dark) VendorDueDarkBg else VendorDueLightBg
+    }
+    // Full-strength text everywhere: fading it would drop below readable contrast in light mode.
+    val textColor = when {
+        allPaid -> if (dark) VendorPaidDarkText else VendorPaidLightText
+        else -> if (dark) VendorDueDarkText else VendorDueLightText
+    }
 
     Card(
         modifier = Modifier
@@ -1018,13 +1042,22 @@ private fun VendorOutstandingCard(ledger: VendorLedger, onNavigateToLedger: () -
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = if (allPaid) Icons.Default.CheckCircle else Icons.Default.HourglassTop,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = textColor
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (allPaid) "Vendor Bills \u2014 All Paid" else "Vendor Bills Outstanding",
+                    color = textColor,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
             Text(
-                text = if (allPaid) "Vendor Bills — All Paid" else "Vendor Bills Outstanding",
-                color = textColor.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.labelMedium
-            )
-            Text(
-                text = if (allPaid) "₹0" else "₹${ledger.outstanding}",
+                text = "\u20b9${rupees(ledger.outstanding.max(BigDecimal.ZERO))}",
                 color = textColor,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium
@@ -1034,14 +1067,14 @@ private fun VendorOutstandingCard(ledger: VendorLedger, onNavigateToLedger: () -
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Total: ₹${ledger.totalExpenses}",
+                    text = "Total: \u20b9${rupees(ledger.totalExpenses)}",
                     modifier = Modifier.weight(1f),
-                    color = textColor.copy(alpha = 0.65f),
+                    color = textColor,
                     style = MaterialTheme.typography.labelSmall
                 )
                 Text(
-                    text = "Paid: ₹${ledger.totalPaid}",
-                    color = textColor.copy(alpha = 0.65f),
+                    text = "Paid: \u20b9${rupees(ledger.totalPaid)}",
+                    color = textColor,
                     style = MaterialTheme.typography.labelSmall
                 )
             }
