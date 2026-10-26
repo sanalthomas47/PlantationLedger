@@ -64,6 +64,13 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 private val ButtonSize = 56.dp
+
+/** Material 3 floating action button size and its margin inside a Scaffold. */
+private val FabSize = 56.dp
+private val FabMargin = 16.dp
+
+/** Space between the calculator button and the "+" button below it. */
+private val FabGap = 16.dp
 private val PanelWidth = 288.dp
 
 /**
@@ -102,8 +109,14 @@ fun FloatingCalculator(viewModel: CalculatorViewModel, modifier: Modifier = Modi
         } else {
             val size = with(density) { ButtonSize.roundToPx() }
             val buttonSize = IntSize(size, size)
-            // Default: left edge, two-thirds down, away from the screens' "+" buttons on the right.
-            val default = Offset(with(density) { 12.dp.toPx() }, area.height * 0.66f)
+            // Default: stacked directly above the screens' "+" button (a 56dp FAB that Scaffold places
+            // 16dp from the right and bottom), sharing its right edge with a 16dp gap between them.
+            val default = with(density) {
+                Offset(
+                    area.width - (FabMargin + ButtonSize).toPx(),
+                    area.height - (FabMargin + FabSize + FabGap + ButtonSize).toPx()
+                )
+            }
             val position = clamp(viewModel.buttonOffset ?: default, buttonSize, area)
             val currentDefault by rememberUpdatedState(default)
             val currentArea by rememberUpdatedState(area)
