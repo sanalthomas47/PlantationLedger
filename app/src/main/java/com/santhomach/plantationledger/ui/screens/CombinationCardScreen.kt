@@ -99,7 +99,12 @@ fun CombinationCardScreen(
                     .fillMaxSize()
                     .padding(padding),
                 contentAlignment = Alignment.Center
-            ) { Text("This card no longer exists.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            ) {
+                Text(
+                    "This card no longer exists.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             else -> Column(
                 modifier = Modifier
@@ -111,15 +116,27 @@ fun CombinationCardScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val form = state.form
-                Field("Combination group name *", form.name, singleLine = true,
-                    isError = form.name.isBlank()) { v -> viewModel.updateForm { it.copy(name = v) } }
-                Field("Purpose", form.purpose, singleLine = false, minLines = 2,
-                    placeholder = state.category?.purposeHint) { v -> viewModel.updateForm { it.copy(purpose = v) } }
-                Field("Combination", form.combination, minLines = 4,
-                    placeholder = "e.g. MOP 1 kg + Urea 500 g per 200 L water") { v -> viewModel.updateForm { it.copy(combination = v) } }
-                Field("Usage", form.usage, minLines = 3,
-                    placeholder = "e.g. Dose per plant, method, interval") { v -> viewModel.updateForm { it.copy(usage = v) } }
-                Field("Comments", form.comments, minLines = 3) { v -> viewModel.updateForm { it.copy(comments = v) } }
+                Field(
+                    "Combination group name *", form.name, singleLine = true,
+                    isError = form.name.isBlank()
+                ) { v -> viewModel.updateForm { it.copy(name = v) } }
+                Field(
+                    "Purpose", form.purpose, singleLine = false, minLines = 2,
+                    placeholder = state.category?.purposeHint
+                ) { v -> viewModel.updateForm { it.copy(purpose = v) } }
+                Field(
+                    "Combination", form.combination, minLines = 4,
+                    placeholder = "e.g. MOP 1 kg + Urea 500 g per 200 L water"
+                ) { v -> viewModel.updateForm { it.copy(combination = v) } }
+                Field(
+                    "Usage", form.usage, minLines = 3,
+                    placeholder = "e.g. Dose per plant, method, interval"
+                ) { v -> viewModel.updateForm { it.copy(usage = v) } }
+                Field(
+                    "Comments",
+                    form.comments,
+                    minLines = 3
+                ) { v -> viewModel.updateForm { it.copy(comments = v) } }
 
                 Button(
                     onClick = viewModel::save,
