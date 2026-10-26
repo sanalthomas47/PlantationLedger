@@ -172,9 +172,10 @@ fun BackupsScreen(
             title = { Text("Delete ${backups.size} backup${if (backups.size == 1) "" else "s"}?") },
             text = {
                 Text(
-                    backups.take(6).joinToString("\n") { "• ${formatTime(it.createdAtMillis)}  (${kindLabel(it.kind)})" } +
-                        (if (backups.size > 6) "\n… and ${backups.size - 6} more" else "") +
-                        "\n\nDeleted backups cannot be recovered."
+                    backups.take(6)
+                        .joinToString("\n") { "• ${formatTime(it.createdAtMillis)}  (${kindLabel(it.kind)})" } +
+                            (if (backups.size > 6) "\n… and ${backups.size - 6} more" else "") +
+                            "\n\nDeleted backups cannot be recovered."
                 )
             },
             confirmButton = {
@@ -210,11 +211,11 @@ fun BackupsScreen(
             text = {
                 Text(
                     "${formatTime(backup.createdAtMillis)} (${kindLabel(backup.kind)})\n\n" +
-                        "Your current data is exported to Downloads first, so nothing is lost.\n\n" +
-                        "Every record in the backup replaces the same record in the app. " +
-                        "Entries added after the backup was made are kept.\n\n" +
-                        "The Schedule (monthly checklist and combination cards) is replaced " +
-                        "with the backup's, if the backup has one."
+                            "Your current data is exported to Downloads first, so nothing is lost.\n\n" +
+                            "Every record in the backup replaces the same record in the app. " +
+                            "Entries added after the backup was made are kept.\n\n" +
+                            "The Schedule (monthly checklist and combination cards) is replaced " +
+                            "with the backup's, if the backup has one."
                 )
             },
             confirmButton = {
@@ -407,6 +408,8 @@ private fun formatSize(bytes: Long): String = when {
     else -> "$bytes B"
 }
 
-private fun kindTitle(kind: BackupKind) = if (kind == BackupKind.EXPORT) "Exported backups" else "Automatic daily backups"
+private fun kindTitle(kind: BackupKind) =
+    if (kind == BackupKind.EXPORT) "Exported backups" else "Automatic daily backups"
 
-private fun kindLabel(kind: BackupKind) = if (kind == BackupKind.EXPORT) "export" else "daily backup"
+private fun kindLabel(kind: BackupKind) =
+    if (kind == BackupKind.EXPORT) "export" else "daily backup"
