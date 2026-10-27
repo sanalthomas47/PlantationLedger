@@ -107,11 +107,23 @@ fun IncomeBreakdownScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Spacer(modifier = Modifier.width(20.dp))
-                        Text("TOTAL", modifier = Modifier.weight(2f), fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelMedium)
-                        listOf(state.thisWeekTotal, state.thisYearTotal, state.allTimeTotal).forEach {
-                            Text("₹${shortAmount(it)}", modifier = Modifier.weight(1.3f), fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.End, maxLines = 1, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "TOTAL", modifier = Modifier.weight(2f), fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        listOf(
+                            state.thisWeekTotal,
+                            state.thisYearTotal,
+                            state.allTimeTotal
+                        ).forEach {
+                            Text(
+                                "₹${shortAmount(it)}",
+                                modifier = Modifier.weight(1.3f),
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.End,
+                                maxLines = 1,
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                 }
@@ -129,11 +141,18 @@ private fun GridHeader(firstColumn: String) {
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(firstColumn, modifier = Modifier.weight(2.2f), fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.labelMedium)
+        Text(
+            firstColumn, modifier = Modifier.weight(2.2f), fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.labelMedium
+        )
         listOf("This Week", "This Year", "All Time").forEach {
-            Text(it, modifier = Modifier.weight(1.3f), fontWeight = FontWeight.Bold, textAlign = TextAlign.End,
-                style = MaterialTheme.typography.labelSmall)
+            Text(
+                it,
+                modifier = Modifier.weight(1.3f),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }
@@ -154,8 +173,14 @@ private fun IncomeTypeRow(type: IncomeTypeSummary, open: Boolean, onToggle: () -
             tint = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.width(4.dp))
-        Text(type.typeName, modifier = Modifier.weight(2f), fontWeight = FontWeight.SemiBold,
-            maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            type.typeName,
+            modifier = Modifier.weight(2f),
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyMedium
+        )
         PeriodCell(type.thisWeek, Modifier.weight(1.3f))
         PeriodCell(type.thisYear, Modifier.weight(1.3f))
         PeriodCell(type.allTime, Modifier.weight(1.3f))
@@ -194,7 +219,10 @@ private fun IncomeSales(type: IncomeTypeSummary) {
             .padding(start = 36.dp, end = 16.dp, top = 6.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        listOf("This year" to type.thisYear, "All time" to type.allTime).forEach { (label, period) ->
+        listOf(
+            "This year" to type.thisYear,
+            "All time" to type.allTime
+        ).forEach { (label, period) ->
             period.pricePerKg?.let { price ->
                 Text(
                     text = "$label: ${weightText(period.weight)} kg, average ₹${fullAmount(price)}/kg",
@@ -210,11 +238,20 @@ private fun IncomeSales(type: IncomeTypeSummary) {
             SaleCell("₹/kg", Modifier.weight(1f), header = true)
         }
         type.sales.forEach { sale: IncomeSale ->
-            val date = runCatching { LocalDate.parse(sale.date).format(dateFormat) }.getOrDefault(sale.date)
-            val price = if (sale.weight > 0) sale.amount.divide(BigDecimal.valueOf(sale.weight), 0, RoundingMode.HALF_UP) else null
+            val date = runCatching {
+                LocalDate.parse(sale.date).format(dateFormat)
+            }.getOrDefault(sale.date)
+            val price = if (sale.weight > 0) sale.amount.divide(
+                BigDecimal.valueOf(sale.weight),
+                0,
+                RoundingMode.HALF_UP
+            ) else null
             Row {
                 SaleCell(date, Modifier.weight(1.4f), alignEnd = false)
-                SaleCell(if (sale.weight > 0) weightText(sale.weight) else "—", Modifier.weight(0.9f))
+                SaleCell(
+                    if (sale.weight > 0) weightText(sale.weight) else "—",
+                    Modifier.weight(0.9f)
+                )
                 SaleCell("₹${fullAmount(sale.amount)}", Modifier.weight(1.2f))
                 SaleCell(price?.let { "₹${fullAmount(it)}" } ?: "—", Modifier.weight(1f))
             }
@@ -223,7 +260,12 @@ private fun IncomeSales(type: IncomeTypeSummary) {
 }
 
 @Composable
-private fun SaleCell(text: String, modifier: Modifier, header: Boolean = false, alignEnd: Boolean = true) {
+private fun SaleCell(
+    text: String,
+    modifier: Modifier,
+    header: Boolean = false,
+    alignEnd: Boolean = true
+) {
     Text(
         text = text,
         modifier = modifier,
@@ -261,7 +303,10 @@ fun EfficiencyScreen(
             ) {
                 item(key = "period") {
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        listOf(false to "This year", true to "All time").forEachIndexed { index, (value, label) ->
+                        listOf(
+                            false to "This year",
+                            true to "All time"
+                        ).forEachIndexed { index, (value, label) ->
                             SegmentedButton(
                                 selected = state.allTime == value,
                                 onClick = { viewModel.setAllTime(value) },
@@ -272,21 +317,27 @@ fun EfficiencyScreen(
                 }
                 if (state.report.crops.isEmpty()) {
                     item(key = "empty") {
-                        Text("Nothing recorded for this period.", color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Nothing recorded for this period.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
                 items(state.report.crops, key = { it.crop }) { crop ->
-                    CropCard(crop, open = crop.crop in state.expanded, onToggle = { viewModel.toggle(crop.crop) })
+                    CropCard(
+                        crop,
+                        open = crop.crop in state.expanded,
+                        onToggle = { viewModel.toggle(crop.crop) })
                 }
                 item(key = "notes") {
                     Text(
                         text = "Expenses are matched to a crop when the expense type, subtype or labour task " +
-                            "names it (e.g. \"Pepper Drying\"). Anything naming no crop is counted under " +
-                            "$DEFAULT_CROP. Pesticide, fertilizer and foliar bills are included. Capital " +
-                            "expenses are left out" +
-                            (if (state.report.excludedCapital.signum() > 0)
-                                " (₹${fullAmount(state.report.excludedCapital)} in this period)." else "."),
+                                "names it (e.g. \"Pepper Drying\"). Anything naming no crop is counted under " +
+                                "$DEFAULT_CROP. Pesticide, fertilizer and foliar bills are included. Capital " +
+                                "expenses are left out" +
+                                (if (state.report.excludedCapital.signum() > 0)
+                                    " (₹${fullAmount(state.report.excludedCapital)} in this period)." else "."),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -306,13 +357,25 @@ private fun CropCard(crop: CropEfficiency, open: Boolean, onToggle: () -> Unit) 
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(crop.crop, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        crop.crop,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
                     if (crop.incomeTypes.isNotEmpty()) {
-                        Text(crop.incomeTypes.joinToString(", "), color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            crop.incomeTypes.joinToString(", "),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 }
                 Icon(
@@ -339,8 +402,10 @@ private fun CropCard(crop: CropEfficiency, open: Boolean, onToggle: () -> Unit) 
             if (open) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
                 if (crop.sources.isEmpty()) {
-                    Text("No expenses.", color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "No expenses.", color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
                 val (matched, assigned) = crop.sources.partition { it.matched }
                 SourceGroup("Matched by name", matched)
@@ -353,8 +418,10 @@ private fun CropCard(crop: CropEfficiency, open: Boolean, onToggle: () -> Unit) 
 @Composable
 private fun SourceGroup(title: String, sources: List<ExpenseSource>) {
     if (sources.isEmpty()) return
-    Text(title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary,
-        style = MaterialTheme.typography.labelMedium)
+    Text(
+        title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.labelMedium
+    )
     sources.forEach { source ->
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -371,9 +438,18 @@ private fun SourceGroup(title: String, sources: List<ExpenseSource>) {
 }
 
 @Composable
-private fun Figure(label: String, amount: BigDecimal, modifier: Modifier, emphasise: Boolean = false) {
+private fun Figure(
+    label: String,
+    amount: BigDecimal,
+    modifier: Modifier,
+    emphasise: Boolean = false
+) {
     Column(modifier = modifier) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+        Text(
+            label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall
+        )
         Text(
             text = (if (amount.signum() < 0) "−" else "") + "₹${shortAmount(amount.abs())}",
             fontWeight = if (emphasise) FontWeight.Bold else FontWeight.SemiBold,
@@ -406,14 +482,22 @@ private fun BackTopBar(title: String, onNavigateBack: () -> Unit) {
 
 @Composable
 private fun Loading(modifier: Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) { CircularProgressIndicator() }
 }
 
 @Composable
 private fun Message(text: String, modifier: Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text, modifier = Modifier.padding(32.dp), textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text,
+            modifier = Modifier.padding(32.dp),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
