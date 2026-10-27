@@ -100,8 +100,13 @@ fun ScheduleScreen(
     val snackbar = remember { SnackbarHostState() }
     val today = remember { LocalDate.now() }
     val expanded = rememberSaveable(saver = expandedSaver) {
-        mutableStateListOf("checklist", "month_${today.monthValue}", *CombinationCategory.entries.map { it.name }.toTypedArray())
+        mutableStateListOf(
+            "checklist",
+            "month_${today.monthValue}",
+            *CombinationCategory.entries.map { it.name }.toTypedArray()
+        )
     }
+
     fun toggle(key: String) {
         if (key in expanded) expanded.remove(key) else expanded.add(key)
     }
@@ -172,7 +177,10 @@ fun ScheduleScreen(
             edit = edit,
             onDismiss = { taskEdit = null },
             onSave = { title ->
-                if (edit.task == null) viewModel.addTask(edit.month, title) else viewModel.renameTask(edit.task, title)
+                if (edit.task == null) viewModel.addTask(
+                    edit.month,
+                    title
+                ) else viewModel.renameTask(edit.task, title)
                 taskEdit = null
             },
             onDelete = {
@@ -222,7 +230,10 @@ private fun LazyListScope.checklistSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { onYear(-1) }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous year")
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous year"
+                )
             }
             Text(
                 text = state.year.toString(),
@@ -346,7 +357,11 @@ private fun LazyListScope.cardSection(
             onToggle = onToggle,
             action = {
                 TextButton(onClick = onAdd) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Add")
                 }
@@ -365,7 +380,11 @@ private fun LazyListScope.cardSection(
         }
     }
     cards.forEach { card ->
-        item(key = "card_${card.id}") { CombinationCardItem(card, onClick = { onOpenCard(card.id) }) }
+        item(key = "card_${card.id}") {
+            CombinationCardItem(
+                card,
+                onClick = { onOpenCard(card.id) })
+        }
     }
 }
 
@@ -394,7 +413,11 @@ private fun CombinationCardItem(card: CombinationCard, onClick: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Text(text = card.name, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = card.name,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall
+                )
                 if (card.purpose.isNotBlank()) {
                     Text(
                         text = card.purpose,
@@ -438,7 +461,11 @@ private fun SectionHeader(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
             Text(
                 text = subtitle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -501,7 +528,12 @@ private fun TaskDialog(
 }
 
 @Composable
-private fun NameDialog(title: String, label: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+private fun NameDialog(
+    title: String,
+    label: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
     var name by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -515,7 +547,12 @@ private fun NameDialog(title: String, label: String, onDismiss: () -> Unit, onSa
                 modifier = Modifier.fillMaxWidth()
             )
         },
-        confirmButton = { Button(onClick = { onSave(name) }, enabled = name.isNotBlank()) { Text("Create") } },
+        confirmButton = {
+            Button(
+                onClick = { onSave(name) },
+                enabled = name.isNotBlank()
+            ) { Text("Create") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
