@@ -96,12 +96,19 @@ fun WeeklyBalanceScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("Balance with the manager", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Balance with the manager",
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         BalanceLine("Brought forward into this week", state.broughtForward)
-                        BalanceLine("Balance now (incl. this week)", state.currentBalance, bold = true)
+                        BalanceLine(
+                            "Balance now (incl. this week)",
+                            state.currentBalance,
+                            bold = true
+                        )
                         Text(
                             text = "Payments (advances + settlements) minus labour, overtime and other expenses. " +
-                                "Pesticide/fertilizer/foliar bills are excluded (tracked in Vendor Ledger).",
+                                    "Pesticide/fertilizer/foliar bills are excluded (tracked in Vendor Ledger).",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -141,7 +148,8 @@ fun WeeklyBalanceScreen(
 
 @Composable
 private fun WeekCard(week: WeekBalance, onClick: () -> Unit) {
-    val flagged = week.noPayment || (week.result.signum() != 0 && week.editedAfterSettlement.isNotEmpty())
+    val flagged =
+        week.noPayment || (week.result.signum() != 0 && week.editedAfterSettlement.isNotEmpty())
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -169,7 +177,8 @@ private fun WeekCard(week: WeekBalance, onClick: () -> Unit) {
 
             AmountLine("Costs (${week.days} days)", rupees(week.costs))
             AmountLine(
-                label = week.settlementDate?.let { "Paid (settled ${it.format(weekdayDayMonth)})" } ?: "Paid",
+                label = week.settlementDate?.let { "Paid (settled ${it.format(weekdayDayMonth)})" }
+                    ?: "Paid",
                 value = rupees(week.payments)
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
@@ -185,7 +194,7 @@ private fun WeekCard(week: WeekBalance, onClick: () -> Unit) {
             if (week.result.signum() != 0 && week.editedAfterSettlement.isNotEmpty()) {
                 Warning(
                     "Changed after settlement: " +
-                        week.editedAfterSettlement.joinToString { it.format(weekdayDayMonth) }
+                            week.editedAfterSettlement.joinToString { it.format(weekdayDayMonth) }
                 )
             }
         }
@@ -208,7 +217,8 @@ private fun BalanceLine(label: String, amount: BigDecimal, bold: Boolean = false
         -1 -> "Short " to MaterialTheme.colorScheme.error
         else -> "Balanced " to MaterialTheme.colorScheme.onSurface
     }
-    val style = if (bold) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium
+    val style =
+        if (bold) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
