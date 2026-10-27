@@ -189,7 +189,8 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+                            .toLocalDate()
                         onNavigateToExpenseEntry(date, null)
                     }
                     showDatePicker = false
@@ -325,7 +326,8 @@ fun HomeScreenContent(
                             style = MaterialTheme.typography.titleLarge
                         )
                         Text(
-                            text = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, dd MMM yyyy")),
+                            text = LocalDate.now()
+                                .format(DateTimeFormatter.ofPattern("EEEE, dd MMM yyyy")),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -333,10 +335,18 @@ fun HomeScreenContent(
                 },
                 actions = {
                     IconButton(onClick = onNavigateToSearch) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -373,7 +383,10 @@ fun HomeScreenContent(
 
                 if (vendorLedger.totalExpenses > BigDecimal.ZERO) {
                     item {
-                        VendorOutstandingCard(ledger = vendorLedger, onNavigateToLedger = onNavigateToVendorLedger)
+                        VendorOutstandingCard(
+                            ledger = vendorLedger,
+                            onNavigateToLedger = onNavigateToVendorLedger
+                        )
                     }
                 }
 
@@ -423,7 +436,8 @@ fun HomeScreenContent(
                     if (yearOpen) {
                         year.months.forEach { month ->
                             val monthKey = month.month.toString()
-                            val monthOpen = expanded[monthKey] ?: (month.month == YearMonth.from(today))
+                            val monthOpen =
+                                expanded[monthKey] ?: (month.month == YearMonth.from(today))
                             item(key = "month_$monthKey") {
                                 ActivityGroupHeader(
                                     label = month.month.format(DateTimeFormatter.ofPattern("MMMM")),
@@ -451,7 +465,12 @@ fun HomeScreenContent(
 
                 if (activityTree.isEmpty()) {
                     item {
-                        EmptyStateCard(onClick = { onNavigateToExpenseEntry(LocalDate.now(), null) })
+                        EmptyStateCard(onClick = {
+                            onNavigateToExpenseEntry(
+                                LocalDate.now(),
+                                null
+                            )
+                        })
                     }
                 }
             }
@@ -534,8 +553,14 @@ private fun PerformanceHeroCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val carried = when (broughtForward.signum()) {
-                    1 -> "Brought forward: Excess ₹${broughtForward.stripTrailingZeros().toPlainString()}"
-                    -1 -> "Brought forward: Short ₹${broughtForward.abs().stripTrailingZeros().toPlainString()}"
+                    1 -> "Brought forward: Excess ₹${
+                        broughtForward.stripTrailingZeros().toPlainString()
+                    }"
+
+                    -1 -> "Brought forward: Short ₹${
+                        broughtForward.abs().stripTrailingZeros().toPlainString()
+                    }"
+
                     else -> "Nothing brought forward"
                 }
                 Text(
@@ -553,7 +578,12 @@ private fun PerformanceHeroCard(
             HorizontalDivider(thickness = 0.5.dp, color = Color.White.copy(alpha = 0.15f))
             SummaryLine("THIS YEAR", yearSummary.totalIncome, yearExpenses, showEfficiency = true)
             HorizontalDivider(thickness = 0.5.dp, color = Color.White.copy(alpha = 0.15f))
-            SummaryLine("ALL TIME", allTimeSummary.totalIncome, allTimeExpenses, showEfficiency = true)
+            SummaryLine(
+                "ALL TIME",
+                allTimeSummary.totalIncome,
+                allTimeExpenses,
+                showEfficiency = true
+            )
         }
     }
 }
@@ -587,7 +617,8 @@ private fun SummaryLine(
                 )
             } else if (showEfficiency) {
                 val efficiency = if (expense > BigDecimal.ZERO) {
-                    income.multiply(BigDecimal("100")).divide(expense, 0, RoundingMode.HALF_UP).toInt()
+                    income.multiply(BigDecimal("100")).divide(expense, 0, RoundingMode.HALF_UP)
+                        .toInt()
                 } else {
                     if (income > BigDecimal.ZERO) 100 else 0
                 }
@@ -626,7 +657,12 @@ private fun SummaryLine(
 }
 
 @Composable
-private fun StatItemMini(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+private fun StatItemMini(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(
             text = label,
@@ -695,17 +731,65 @@ private fun QuickActionsSection(
             Spacer(modifier = Modifier.height(14.dp))
             // Two rows of four; the 48dp tiles keep their size, only the gaps are smaller.
             Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton("Schedule", Icons.Default.Checklist, Color(0xFF1D7A4D), Modifier.weight(1f), onSchedule)
-                QuickActionButton("By Date", Icons.Default.CalendarMonth, Color(0xFF155FC0), Modifier.weight(1f), onAddForDate)
-                QuickActionButton("Reports", Icons.Default.BarChart, Color(0xFF6A3E9A), Modifier.weight(1f), onReports)
-                QuickActionButton("Payments", Icons.Default.Payments, Color(0xFFBF5B00), Modifier.weight(1f), onPayments)
+                QuickActionButton(
+                    "Schedule",
+                    Icons.Default.Checklist,
+                    Color(0xFF1D7A4D),
+                    Modifier.weight(1f),
+                    onSchedule
+                )
+                QuickActionButton(
+                    "By Date",
+                    Icons.Default.CalendarMonth,
+                    Color(0xFF155FC0),
+                    Modifier.weight(1f),
+                    onAddForDate
+                )
+                QuickActionButton(
+                    "Reports",
+                    Icons.Default.BarChart,
+                    Color(0xFF6A3E9A),
+                    Modifier.weight(1f),
+                    onReports
+                )
+                QuickActionButton(
+                    "Payments",
+                    Icons.Default.Payments,
+                    Color(0xFFBF5B00),
+                    Modifier.weight(1f),
+                    onPayments
+                )
             }
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton("Weekly", Icons.Default.ListAlt, Color(0xFF00695C), Modifier.weight(1f), onWeekly)
-                QuickActionButton("Breakdown", Icons.Default.PieChart, Color(0xFFC62828), Modifier.weight(1f), onExpenseTypes)
-                QuickActionButton("Income", Icons.Default.Savings, Color(0xFF8A5A00), Modifier.weight(1f), onIncome)
-                QuickActionButton("Efficiency", Icons.Default.Balance, Color(0xFF3949AB), Modifier.weight(1f), onEfficiency)
+                QuickActionButton(
+                    "Weekly",
+                    Icons.Default.ListAlt,
+                    Color(0xFF00695C),
+                    Modifier.weight(1f),
+                    onWeekly
+                )
+                QuickActionButton(
+                    "Breakdown",
+                    Icons.Default.PieChart,
+                    Color(0xFFC62828),
+                    Modifier.weight(1f),
+                    onExpenseTypes
+                )
+                QuickActionButton(
+                    "Income",
+                    Icons.Default.Savings,
+                    Color(0xFF8A5A00),
+                    Modifier.weight(1f),
+                    onIncome
+                )
+                QuickActionButton(
+                    "Efficiency",
+                    Icons.Default.Balance,
+                    Color(0xFF3949AB),
+                    Modifier.weight(1f),
+                    onEfficiency
+                )
             }
         }
     }
@@ -734,7 +818,12 @@ private fun QuickActionButton(
                 .background(color),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = Color.White)
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = Color.White
+            )
         }
         Text(
             text = label,
@@ -755,7 +844,12 @@ private val expandedSaver = Saver<SnapshotStateMap<String, Boolean>, List<String
     save = { map -> map.map { (key, open) -> "$key=$open" } },
     restore = { saved ->
         mutableStateMapOf<String, Boolean>().apply {
-            saved.forEach { entry -> put(entry.substringBefore('='), entry.substringAfter('=').toBoolean()) }
+            saved.forEach { entry ->
+                put(
+                    entry.substringBefore('='),
+                    entry.substringAfter('=').toBoolean()
+                )
+            }
         }
     }
 )
@@ -823,7 +917,10 @@ private fun ActivityGroupHeader(
 fun ExpenseListCard(expense: DailyExpense, onClick: () -> Unit, onLongClick: () -> Unit) {
     val hasAttachment = remember(expense.otherExpenses) {
         try {
-            Json.decodeFromString(ListSerializer(OtherExpenseEntry.serializer()), expense.otherExpenses)
+            Json.decodeFromString(
+                ListSerializer(OtherExpenseEntry.serializer()),
+                expense.otherExpenses
+            )
                 .any { it.receiptImagePath != null }
         } catch (e: Exception) {
             false
@@ -861,7 +958,8 @@ fun ExpenseListCard(expense: DailyExpense, onClick: () -> Unit, onLongClick: () 
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val date = try {
-                        LocalDate.parse(expense.date).format(DateTimeFormatter.ofPattern("dd MMM yyyy, EEE"))
+                        LocalDate.parse(expense.date)
+                            .format(DateTimeFormatter.ofPattern("dd MMM yyyy, EEE"))
                     } catch (e: Exception) {
                         expense.date
                     }
@@ -882,27 +980,33 @@ fun ExpenseListCard(expense: DailyExpense, onClick: () -> Unit, onLongClick: () 
 
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     AmountChip(
-                        "Inc", "₹${expense.totalIncome}",
-                        MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer
+                        "Inc",
+                        "₹${expense.totalIncome}",
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.primaryContainer
                     )
                     val totalExpense = expense.totalLaborCost
                         .add(expense.totalOvertimeCost)
                         .add(expense.totalOtherExpensesCost)
                     AmountChip(
-                        "Exp", "₹$totalExpense",
-                        MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.tertiaryContainer
+                        "Exp",
+                        "₹$totalExpense",
+                        MaterialTheme.colorScheme.tertiary,
+                        MaterialTheme.colorScheme.tertiaryContainer
                     )
                     val totalPayments = expense.advanceAmount
                         .add(expense.excessBalance)
                         .add(expense.weeklyPaymentDone)
                     AmountChip(
-                        "Pay", "₹$totalPayments",
-                        MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.surfaceVariant
+                        "Pay",
+                        "₹$totalPayments",
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                        MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
 
                 val totalWorkers = expense.malayaliMaleCount + expense.bengaliMaleCount +
-                    expense.malayaliFemaleCount + expense.bengaliFemaleCount
+                        expense.malayaliFemaleCount + expense.bengaliFemaleCount
                 if (totalWorkers > 0) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -914,7 +1018,7 @@ fun ExpenseListCard(expense: DailyExpense, onClick: () -> Unit, onLongClick: () 
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "$totalWorkers workers (${expense.malayaliMaleCount}M + ${expense.bengaliMaleCount}M + " +
-                                "${expense.malayaliFemaleCount}F + ${expense.bengaliFemaleCount}F)",
+                                    "${expense.malayaliFemaleCount}F + ${expense.bengaliFemaleCount}F)",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -1086,7 +1190,10 @@ private fun VendorOutstandingCard(ledger: VendorLedger, onNavigateToLedger: () -
 // Expense detail dialog
 // ---------------------------------------------------------------------------------------------
 
-private inline fun <reified T> decodeList(json: String, serializer: kotlinx.serialization.KSerializer<T>): List<T> =
+private inline fun <reified T> decodeList(
+    json: String,
+    serializer: kotlinx.serialization.KSerializer<T>
+): List<T> =
     try {
         if (json.isBlank() || json == "[]") emptyList()
         else Json.decodeFromString(ListSerializer(serializer), json)
@@ -1103,10 +1210,30 @@ fun ExpenseDetailDialog(
     onImageClick: (String) -> Unit = {},
     onDeleteVendorPayment: (VendorPayment) -> Unit = {}
 ) {
-    val workerGroups = remember(expense.workerGroups) { decodeList(expense.workerGroups, WorkerGroupEntry.serializer()) }
-    val otherExpenses = remember(expense.otherExpenses) { decodeList(expense.otherExpenses, OtherExpenseEntry.serializer()) }
-    val incomeEntries = remember(expense.incomeEntries) { decodeList(expense.incomeEntries, IncomeEntry.serializer()) }
-    val advanceEntries = remember(expense.advanceEntries) { decodeList(expense.advanceEntries, AdvanceEntry.serializer()) }
+    val workerGroups = remember(expense.workerGroups) {
+        decodeList(
+            expense.workerGroups,
+            WorkerGroupEntry.serializer()
+        )
+    }
+    val otherExpenses = remember(expense.otherExpenses) {
+        decodeList(
+            expense.otherExpenses,
+            OtherExpenseEntry.serializer()
+        )
+    }
+    val incomeEntries = remember(expense.incomeEntries) {
+        decodeList(
+            expense.incomeEntries,
+            IncomeEntry.serializer()
+        )
+    }
+    val advanceEntries = remember(expense.advanceEntries) {
+        decodeList(
+            expense.advanceEntries,
+            AdvanceEntry.serializer()
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1163,7 +1290,12 @@ fun ExpenseDetailDialog(
                         DetailRow("Advances Paid", "₹${expense.advanceAmount}")
                         DetailRow("Weekly Settlement", "₹${expense.weeklyPaymentDone}")
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                        DetailRow("TOTAL INCOME", "₹${expense.totalIncome}", isTotal = true, color = MaterialTheme.colorScheme.primary)
+                        DetailRow(
+                            "TOTAL INCOME",
+                            "₹${expense.totalIncome}",
+                            isTotal = true,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
 
@@ -1175,13 +1307,19 @@ fun ExpenseDetailDialog(
                                 .fillMaxWidth()
                                 .padding(start = 8.dp)
                         ) {
-                            Text("${group.workerTypeName} (${group.count})", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "${group.workerTypeName} (${group.count})",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                             Text(
                                 text = "Task: ${group.taskPerformed}",
                                 color = MaterialTheme.colorScheme.secondary,
                                 style = MaterialTheme.typography.bodySmall
                             )
-                            Text("Cost: ₹${group.calculateTotalGroupCost()}", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "Cost: ₹${group.calculateTotalGroupCost()}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                             if (group.comments.isNotEmpty()) {
                                 Text(
                                     text = group.comments,
@@ -1216,7 +1354,10 @@ fun ExpenseDetailDialog(
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
-                                Text("Qty: ${entry.quantity} | ₹${entry.amount}", style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    "Qty: ${entry.quantity} | ₹${entry.amount}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
                             entry.receiptImagePath?.let { path ->
                                 AsyncImage(
@@ -1244,7 +1385,10 @@ fun ExpenseDetailDialog(
                                 .padding(start = 8.dp)
                         ) {
                             Text(entry.typeName, style = MaterialTheme.typography.bodyMedium)
-                            Text("${entry.weight} kg @ ₹${entry.pricePerKilo}/kg", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "${entry.weight} kg @ ₹${entry.pricePerKilo}/kg",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                             Text(
                                 text = "Total: ₹${entry.amount}",
                                 color = MaterialTheme.colorScheme.primary,
@@ -1263,8 +1407,14 @@ fun ExpenseDetailDialog(
                                 .fillMaxWidth()
                                 .padding(start = 8.dp)
                         ) {
-                            Text("Recipient: ${entry.recipientName}", style = MaterialTheme.typography.bodyMedium)
-                            Text("Amount: ₹${entry.amount}", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                "Recipient: ${entry.recipientName}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                "Amount: ₹${entry.amount}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                             if (entry.reason.isNotEmpty()) {
                                 Text(
                                     text = "Reason: ${entry.reason}",
@@ -1289,7 +1439,8 @@ fun ExpenseDetailDialog(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 val paidDate = try {
-                                    LocalDate.parse(payment.date).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                                    LocalDate.parse(payment.date)
+                                        .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
                                 } catch (e: Exception) {
                                     payment.date
                                 }
@@ -1358,12 +1509,18 @@ private fun DetailSectionTitle(title: String) {
 }
 
 @Composable
-private fun DetailRow(label: String, value: String, isTotal: Boolean = false, color: Color = Color.Unspecified) {
+private fun DetailRow(
+    label: String,
+    value: String,
+    isTotal: Boolean = false,
+    color: Color = Color.Unspecified
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        val style = if (isTotal) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodySmall
+        val style =
+            if (isTotal) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodySmall
         Text(label, style = style)
         Text(
             text = value,
@@ -1396,14 +1553,18 @@ fun CloneExpenseDialog(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = nextWorkday.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            initialSelectedDateMillis = nextWorkday.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                .toEpochMilli()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        onClone(Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate())
+                        onClone(
+                            Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                        )
                     }
                     showDatePicker = false
                 }) {
@@ -1425,7 +1586,11 @@ fun CloneExpenseDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(onClick = { onClone(nextWorkday) }) {
-                Icon(Icons.Default.FastForward, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(
+                    Icons.Default.FastForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(nextWorkday.format(DateTimeFormatter.ofPattern("EEE dd MMM")))
             }
@@ -1433,7 +1598,11 @@ fun CloneExpenseDialog(
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { showDatePicker = true }) {
-                    Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Pick Date")
                 }
