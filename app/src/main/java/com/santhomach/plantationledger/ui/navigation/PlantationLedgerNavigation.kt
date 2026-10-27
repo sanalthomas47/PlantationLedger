@@ -48,6 +48,7 @@ sealed class Screen(val route: String) {
     object ScheduleCard : Screen("schedule_card/{cardId}") {
         fun createRoute(cardId: Int): String = "schedule_card/$cardId"
     }
+
     object Payments : Screen("payments")
     object WeeklyFunds : Screen("weekly_funds")
     object Search : Screen("search")
@@ -87,7 +88,14 @@ fun PlantationLedgerNavigation(
         composable(Screen.WeeklyBalance.route) {
             WeeklyBalanceScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onOpenWeek = { start, end -> navController.navigate(Screen.Reports.createRoute(start, end)) }
+                onOpenWeek = { start, end ->
+                    navController.navigate(
+                        Screen.Reports.createRoute(
+                            start,
+                            end
+                        )
+                    )
+                }
             )
         }
 
@@ -164,7 +172,9 @@ fun PlantationLedgerNavigation(
 
         composable(
             route = Screen.ScheduleCard.route,
-            arguments = listOf(navArgument(CombinationCardViewModel.CARD_ID) { type = NavType.IntType })
+            arguments = listOf(navArgument(CombinationCardViewModel.CARD_ID) {
+                type = NavType.IntType
+            })
         ) {
             CombinationCardScreen(onNavigateBack = { navController.popBackStack() })
         }
