@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,8 +39,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -126,6 +135,10 @@ fun IncomeBreakdownScreen(
                             )
                         }
                     }
+                }
+
+                item(key = "chart") {
+                    IncomeChart(state.types)
                 }
             }
         }
@@ -275,6 +288,142 @@ private fun SaleCell(
         maxLines = 1,
         style = MaterialTheme.typography.labelSmall
     )
+}
+
+/** Parrot green, checked for contrast on both the light and the dark card. */
+private val IncomeBarColor = Color(0xFF3FA51B)
+
+/** Income by type, highest to lowest, with a This year / All time switch. Tap a bar for details. */
+@Composable
+private fun IncomeChart(types: List<IncomeTypeSummary>) {
+    var allTime by rememberSaveable { mutableStateOf(false) }
+    var selected by remember { mutableStateOf<String?>(null) }
+
+    val bars = types
+        .map { it.typeName to if (allTime) it.allTime else it.thisYear }
+        .filter { it.second.amount.signum() > 0 }
+        .sortedByDescending { it.second.amount }
+    val total = bars.fold(BigDecimal.ZERO) { acc, bar -> acc.add(bar.second.amount) }
+    val max = bars.firstOrNull()?.second?.amount ?: BigDecimal.ZERO
+
+    Column(
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Income chart", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            listOf(false to "This year", true to "All time").forEachIndexed { index, (value, label) ->
+                SegmentedButton(
+                    selected = allTime == value,
+                    onClick = {
+                        allTime = value
+                        selected = null
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
+                ) { Text(label) }
+            }
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Income by type", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = (if (allTime) "All time" else "This year") + ", highest to lowest. Tap a bar for details.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                if (bars.isEmpty()) {
+                    Text(
+                        "No income recorded for this period.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                bars.forEach { (name, period) ->
+                    val share = if (total.signum() > 0)
+                        period.amount.multiply(BigDecimal(100)).divide(total, 1, RoundingMode.HALF_UP) else BigDecimal.ZERO
+                    IncomeBar(
+                        name = name,
+                        period = period,
+                        share = share,
+                        fraction = period.amount.divide(max, 4, RoundingMode.HALF_UP).toFloat(),
+                        selected = selected == name,
+                        onClick = { selected = if (selected == name) null else name }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IncomeBar(
+    name: String,
+    period: IncomePeriod,
+    share: BigDecimal,
+    fraction: Float,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val shareText = share.setScale(0, RoundingMode.HALF_UP).toPlainString() + "%"
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$name, \u20b9${fullAmount(period.amount)}, $shareText"
+            }
+            .padding(vertical = 3.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = name,
+                modifier = Modifier.width(104.dp),
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                // Leave room after the bar for its value label.
+                val track = (maxWidth - 88.dp).coerceAtLeast(0.dp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .width((track * fraction).coerceAtLeast(2.dp))
+                            .height(14.dp)
+                            .clip(RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp))
+                            .background(IncomeBarColor)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "\u20b9${shortAmount(period.amount)} \u00b7 $shareText",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+        }
+        if (selected) {
+            val weight = period.pricePerKg?.let { price ->
+                " \u00b7 ${weightText(period.weight)} kg at \u20b9${fullAmount(price)}/kg"
+            } ?: ""
+            Text(
+                text = "\u20b9${fullAmount(period.amount)} \u00b7 ${share.toPlainString()}% of income$weight",
+                modifier = Modifier.padding(start = 112.dp, top = 2.dp),
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
