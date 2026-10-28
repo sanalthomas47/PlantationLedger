@@ -133,7 +133,12 @@ fun WorkerPaymentScreen(
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(300)) +
-                        slideInVertically(animationSpec = tween(300, delayMillis = index * 50)) { 50 },
+                            slideInVertically(
+                                animationSpec = tween(
+                                    300,
+                                    delayMillis = index * 50
+                                )
+                            ) { 50 },
                     exit = fadeOut(animationSpec = tween(200))
                 ) {
                     Card(
@@ -339,14 +344,16 @@ fun RecordPaymentDialog(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            initialSelectedDateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                .toEpochMilli()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                        date = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+                            .toLocalDate()
                     }
                     showDatePicker = false
                 }) {
