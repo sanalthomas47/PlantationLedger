@@ -106,7 +106,8 @@ fun WeeklyFundsScreen(
 
             items(weeklyFunds, key = { it.id }) { funds ->
                 val weekStart = LocalDate.parse(funds.weekStartDate)
-                val comparison by viewModel.getComparisonFlow(weekStart).collectAsState(initial = null)
+                val comparison by viewModel.getComparisonFlow(weekStart)
+                    .collectAsState(initial = null)
 
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -161,7 +162,12 @@ fun WeeklyFundsScreen(
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextButton(onClick = { onNavigateToReports(weekStart, weekStart.plusDays(5)) }) {
+                            TextButton(onClick = {
+                                onNavigateToReports(
+                                    weekStart,
+                                    weekStart.plusDays(5)
+                                )
+                            }) {
                                 Text("View Summary")
                             }
                             Spacer(modifier = Modifier.width(8.dp))
