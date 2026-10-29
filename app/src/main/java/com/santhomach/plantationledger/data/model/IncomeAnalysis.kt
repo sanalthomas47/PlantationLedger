@@ -68,6 +68,34 @@ fun buildIncomeBreakdown(expenses: List<DailyExpense>, today: LocalDate = LocalD
     }.sortedWith(compareByDescending<IncomeTypeSummary> { it.allTime.amount }.thenBy { it.typeName })
 }
 
+/** One bar of the income chart. */
+data class IncomeBarData(
+    val typeName: String,
+    val period: IncomePeriod,
+    /** Percent of the period's income, to one decimal place. */
+    val share: BigDecimal,
+    /** Bar length relative to the largest bar (0-1). */
+    val fraction: Float
+)
+
+/** The income chart's bars for this year or all time: types with income only, highest to lowest. */
+fun incomeChartBars(types: List<IncomeTypeSummary>, allTime: Boolean): List<IncomeBarData> {
+    val bars = types
+        .map { it.typeName to if (allTime) it.allTime else it.thisYear }
+        .filter { it.second.amount.signum() > 0 }
+        .sortedByDescending { it.second.amount }
+    val total = bars.fold(BigDecimal.ZERO) { acc, bar -> acc.add(bar.second.amount) }
+    val max = bars.firstOrNull()?.second?.amount ?: return emptyList()
+    return bars.map { (name, period) ->
+        IncomeBarData(
+            typeName = name,
+            period = period,
+            share = period.amount.multiply(BigDecimal(100)).divide(total, 1, RoundingMode.HALF_UP),
+            fraction = period.amount.divide(max, 4, RoundingMode.HALF_UP).toFloat()
+        )
+    }
+}
+
 // -------------------------------------------------------------------------------------------------
 // Income vs Expense
 // -------------------------------------------------------------------------------------------------

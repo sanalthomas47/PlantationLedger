@@ -48,7 +48,99 @@ class IncomeAnalysisTest {
         assertMoney(0, types[1].thisWeek.amount)
     }
 
+    @Test
+    fun thisWeekRunsMondayToSunday() {
+        val days = listOf(
+            dailyExpense("2026-10-18", incomes = listOf(income("Pepper Sales", 1))),        // Sunday before
+            dailyExpense("2026-10-19", incomes = listOf(income("Pepper Sales", 10))),       // Monday
+            dailyExpense("2026-10-25", incomes = listOf(income("Pepper Sales", 100))),      // Sunday
+            dailyExpense("2026-10-26", incomes = listOf(income("Pepper Sales", 1_000)))     // next Monday
+        )
+
+        val pepper = buildIncomeBreakdown(days, today).single()
+
+        assertMoney(110, pepper.thisWeek.amount)
+        assertMoney(1_111, pepper.allTime.amount)
+    }
+
+    @Test
+    fun typeNamesAreTrimmedAndUnreadableIncomeIsSkipped() {
+        val days = listOf(
+            dailyExpense("2026-10-20", incomes = listOf(income("Pepper Sales ", 300), income("Banana", 300))),
+            dailyExpense("2026-10-21", incomes = listOf(income(" Pepper Sales", 200))),
+            dailyExpense("2026-10-21").copy(incomeEntries = "not json"),
+            dailyExpense("2026-10-21").copy(incomeEntries = "")
+        )
+
+        val types = buildIncomeBreakdown(days, today)
+
+        assertEquals(listOf("Pepper Sales", "Banana"), types.map { it.typeName })
+        assertMoney(500, types.first().allTime.amount)
+        assertEquals(2, types.first().sales.size)
+    }
+
+    @Test
+    fun equalIncomeIsListedByName() {
+        val days = listOf(dailyExpense("2026-10-20", incomes = listOf(income("Timber", 500), income("Arecanut", 500))))
+
+        assertEquals(listOf("Arecanut", "Timber"), buildIncomeBreakdown(days, today).map { it.typeName })
+    }
+
+    // ---- Income chart ----
+
+    private val chartDays = listOf(
+        dailyExpense("2026-09-01", incomes = listOf(income("Cardamom Sales", 60_000, weight = 30.0),
+            income("Pepper Sales", 30_000), income("Banana", 10_000))),
+        dailyExpense("2024-01-10", incomes = listOf(income("Cardamom Sales", 100_000), income("Timber", 300_000)))
+    )
+
+    @Test
+    fun chartBarsRunHighestToLowestWithTheirShare() {
+        val bars = incomeChartBars(buildIncomeBreakdown(chartDays, today), allTime = false)
+
+        assertEquals(listOf("Cardamom Sales", "Pepper Sales", "Banana"), bars.map { it.typeName })   // no Timber this year
+        assertEquals(listOf("60.0", "30.0", "10.0"), bars.map { it.share.toPlainString() })
+        assertEquals(listOf(1f, 0.5f, 0.1667f), bars.map { it.fraction })            // relative to the top bar
+        assertEquals(30.0, bars.first().period.weight, 0.0)
+        assertMoney(2_000, bars.first().period.pricePerKg)
+    }
+
+    @Test
+    fun chartAllTimeReordersTheBars() {
+        val bars = incomeChartBars(buildIncomeBreakdown(chartDays, today), allTime = true)
+
+        assertEquals(listOf("Timber", "Cardamom Sales", "Pepper Sales", "Banana"), bars.map { it.typeName })
+        assertMoney(160_000, bars[1].period.amount)
+        assertEquals("100.0", bars.fold(BigDecimal.ZERO) { acc, bar -> acc.add(bar.share) }.toPlainString())
+    }
+
+    @Test
+    fun chartIsEmptyWhenThePeriodHasNoIncome() {
+        val old = listOf(dailyExpense("2024-01-10", incomes = listOf(income("Timber", 300_000))))
+
+        assertTrue(incomeChartBars(buildIncomeBreakdown(old, today), allTime = false).isEmpty())
+        assertTrue(incomeChartBars(emptyList(), allTime = true).isEmpty())
+    }
+
     // ---- Income vs Expense ----
+
+    @Test
+    fun capitalIsRecognisedInAnyCaseAndBadLinesAreSkipped() {
+        val days = listOf(
+            dailyExpense("2026-04-01",
+                others = listOf(other("capital expenses", 5_000), other("CAPITAL", 1_000), other("Fuel", 700)),
+                incomes = listOf(income("Cardamom Sales", 400))),
+            dailyExpense("2026-04-02").copy(otherExpenses = "{broken", workerGroups = "[oops")
+        )
+
+        val report = buildEfficiency(days)
+        val cardamom = report.crops.single()
+
+        assertMoney(6_000, report.excludedCapital)
+        assertMoney(700, cardamom.expense)
+        assertMoney(-300, cardamom.net)
+        assertMoney(BigDecimal("0.57"), cardamom.returnPerRupee)
+    }
 
     private val estate = listOf(
         dailyExpense("2026-02-10",
