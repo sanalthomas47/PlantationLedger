@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -109,14 +110,7 @@ fun FloatingCalculator(viewModel: CalculatorViewModel, modifier: Modifier = Modi
         } else {
             val size = with(density) { ButtonSize.roundToPx() }
             val buttonSize = IntSize(size, size)
-            // Default: stacked directly above the screens' "+" button (a 56dp FAB that Scaffold places
-            // 16dp from the right and bottom), sharing its right edge with a 16dp gap between them.
-            val default = with(density) {
-                Offset(
-                    area.width - (FabMargin + ButtonSize).toPx(),
-                    area.height - (FabMargin + FabSize + FabGap + ButtonSize).toPx()
-                )
-            }
+            val default = defaultButtonOffset(area, density)
             val position = clamp(viewModel.buttonOffset ?: default, buttonSize, area)
             val currentDefault by rememberUpdatedState(default)
             val currentArea by rememberUpdatedState(area)
@@ -146,8 +140,19 @@ fun FloatingCalculator(viewModel: CalculatorViewModel, modifier: Modifier = Modi
     }
 }
 
+/**
+ * Where the calculator button starts: stacked directly above the screens' "+" button (a 56dp FAB
+ * that Scaffold places 16dp from the right and bottom), sharing its right edge with a 16dp gap.
+ */
+internal fun defaultButtonOffset(area: IntSize, density: Density): Offset = with(density) {
+    Offset(
+        area.width - (FabMargin + ButtonSize).toPx(),
+        area.height - (FabMargin + FabSize + FabGap + ButtonSize).toPx()
+    )
+}
+
 /** Keeps something of [size] fully inside [area]. */
-private fun clamp(offset: Offset, size: IntSize, area: IntSize): Offset = Offset(
+internal fun clamp(offset: Offset, size: IntSize, area: IntSize): Offset = Offset(
     offset.x.coerceIn(0f, (area.width - size.width).coerceAtLeast(0).toFloat()),
     offset.y.coerceIn(0f, (area.height - size.height).coerceAtLeast(0).toFloat())
 )
