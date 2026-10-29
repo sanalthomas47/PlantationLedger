@@ -60,6 +60,7 @@ import com.santhomach.plantationledger.data.model.ExpenseSource
 import com.santhomach.plantationledger.data.model.IncomePeriod
 import com.santhomach.plantationledger.data.model.IncomeSale
 import com.santhomach.plantationledger.data.model.IncomeTypeSummary
+import com.santhomach.plantationledger.data.model.incomeChartBars
 import com.santhomach.plantationledger.ui.calculator.CalculatorState
 import com.santhomach.plantationledger.ui.viewmodel.EfficiencyViewModel
 import com.santhomach.plantationledger.ui.viewmodel.IncomeBreakdownViewModel
@@ -299,12 +300,7 @@ private fun IncomeChart(types: List<IncomeTypeSummary>) {
     var allTime by rememberSaveable { mutableStateOf(false) }
     var selected by remember { mutableStateOf<String?>(null) }
 
-    val bars = types
-        .map { it.typeName to if (allTime) it.allTime else it.thisYear }
-        .filter { it.second.amount.signum() > 0 }
-        .sortedByDescending { it.second.amount }
-    val total = bars.fold(BigDecimal.ZERO) { acc, bar -> acc.add(bar.second.amount) }
-    val max = bars.firstOrNull()?.second?.amount ?: BigDecimal.ZERO
+    val bars = incomeChartBars(types, allTime)
 
     Column(
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 28.dp),
@@ -343,14 +339,13 @@ private fun IncomeChart(types: List<IncomeTypeSummary>) {
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                bars.forEach { (name, period) ->
-                    val share = if (total.signum() > 0)
-                        period.amount.multiply(BigDecimal(100)).divide(total, 1, RoundingMode.HALF_UP) else BigDecimal.ZERO
+                bars.forEach { bar ->
+                    val name = bar.typeName
                     IncomeBar(
                         name = name,
-                        period = period,
-                        share = share,
-                        fraction = period.amount.divide(max, 4, RoundingMode.HALF_UP).toFloat(),
+                        period = bar.period,
+                        share = bar.share,
+                        fraction = bar.fraction,
                         selected = selected == name,
                         onClick = { selected = if (selected == name) null else name }
                     )
