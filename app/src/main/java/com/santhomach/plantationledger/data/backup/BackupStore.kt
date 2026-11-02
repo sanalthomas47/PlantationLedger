@@ -98,7 +98,12 @@ class AndroidBackupStore(private val context: Context) : BackupStore {
 
     override suspend fun delete(backup: BackupFile): Boolean = withContext(Dispatchers.IO) {
         when (backup.kind) {
-            BackupKind.EXPORT -> context.contentResolver.delete(Uri.parse(backup.id), null, null) > 0
+            BackupKind.EXPORT -> context.contentResolver.delete(
+                Uri.parse(backup.id),
+                null,
+                null
+            ) > 0
+
             BackupKind.AUTO -> autoFile(backup).delete()
         }
     }
@@ -108,13 +113,18 @@ class AndroidBackupStore(private val context: Context) : BackupStore {
             BackupKind.EXPORT -> context.contentResolver.openInputStream(Uri.parse(backup.id))
                 ?.use { it.bufferedReader(Charsets.UTF_8).readText() }
                 ?: throw IllegalStateException("Could not open ${backup.name}")
+
             BackupKind.AUTO -> autoFile(backup).readText(Charsets.UTF_8)
         }
     }
 
     override fun shareUri(backup: BackupFile): Uri = when (backup.kind) {
         BackupKind.EXPORT -> Uri.parse(backup.id)
-        BackupKind.AUTO -> FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", autoFile(backup))
+        BackupKind.AUTO -> FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            autoFile(backup)
+        )
     }
 
     /** Only files inside the auto-backup folder can be touched. */
@@ -129,7 +139,8 @@ class AndroidBackupStore(private val context: Context) : BackupStore {
 
         /** `plantation_ledger_backup_1792512369592.json` was saved at 1792512369592 ms. */
         fun exportTimeFromName(name: String): Long? =
-            name.removePrefix(EXPORT_PREFIX).substringBefore('.').substringBefore(' ').toLongOrNull()
+            name.removePrefix(EXPORT_PREFIX).substringBefore('.').substringBefore(' ')
+                .toLongOrNull()
                 ?.takeIf { name.startsWith(EXPORT_PREFIX) }
     }
 }
