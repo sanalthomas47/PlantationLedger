@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Payments
@@ -139,6 +140,7 @@ fun HomeScreen(
     onNavigateToSchedule: () -> Unit = {},
     onNavigateToIncomeBreakdown: () -> Unit = {},
     onNavigateToEfficiency: () -> Unit = {},
+    onNavigateToInventory: () -> Unit = {},
     viewModel: ReportsViewModel? = null
 ) {
     if (LocalInspectionMode.current && viewModel == null) {
@@ -278,7 +280,8 @@ fun HomeScreen(
         onNavigateToWeeklyBalance = onNavigateToWeeklyBalance,
         onNavigateToSchedule = onNavigateToSchedule,
         onNavigateToIncomeBreakdown = onNavigateToIncomeBreakdown,
-        onNavigateToEfficiency = onNavigateToEfficiency
+        onNavigateToEfficiency = onNavigateToEfficiency,
+        onNavigateToInventory = onNavigateToInventory
     )
 }
 
@@ -307,7 +310,8 @@ fun HomeScreenContent(
     onNavigateToWeeklyBalance: () -> Unit = {},
     onNavigateToSchedule: () -> Unit = {},
     onNavigateToIncomeBreakdown: () -> Unit = {},
-    onNavigateToEfficiency: () -> Unit = {}
+    onNavigateToEfficiency: () -> Unit = {},
+    onNavigateToInventory: () -> Unit = {}
 ) {
     // Open / closed state of each year ("2026") and month ("2026-10") the user has tapped.
     val expanded = rememberSaveable(saver = expandedSaver) { mutableStateMapOf<String, Boolean>() }
@@ -399,7 +403,8 @@ fun HomeScreenContent(
                         onWeekly = onNavigateToWeeklyFunds,
                         onExpenseTypes = onNavigateToExpenseTypeSummary,
                         onIncome = onNavigateToIncomeBreakdown,
-                        onEfficiency = onNavigateToEfficiency
+                        onEfficiency = onNavigateToEfficiency,
+                        onInventory = onNavigateToInventory
                     )
                 }
 
@@ -713,7 +718,8 @@ private fun QuickActionsSection(
     onWeekly: () -> Unit,
     onExpenseTypes: () -> Unit,
     onIncome: () -> Unit,
-    onEfficiency: () -> Unit
+    onEfficiency: () -> Unit,
+    onInventory: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -729,7 +735,7 @@ private fun QuickActionsSection(
                 style = MaterialTheme.typography.labelMedium
             )
             Spacer(modifier = Modifier.height(14.dp))
-            // Two rows of four; the 48dp tiles keep their size, only the gaps are smaller.
+            // Rows of four; the 48dp tiles keep their size, only the gaps are smaller.
             Row(modifier = Modifier.fillMaxWidth()) {
                 QuickActionButton(
                     "Schedule",
@@ -790,6 +796,18 @@ private fun QuickActionsSection(
                     Modifier.weight(1f),
                     onEfficiency
                 )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            // Empty slots keep the third row's tiles lined up with the columns above.
+            Row(modifier = Modifier.fillMaxWidth()) {
+                QuickActionButton(
+                    "Inventory",
+                    Icons.Default.Inventory2,
+                    Color(0xFF6D4C41),
+                    Modifier.weight(1f),
+                    onInventory
+                )
+                repeat(3) { Spacer(modifier = Modifier.weight(1f)) }
             }
         }
     }

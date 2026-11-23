@@ -3,6 +3,8 @@ package com.santhomach.plantationledger.data.export
 import android.content.Context
 import android.util.Base64
 import com.santhomach.plantationledger.data.AppDatabase
+import com.santhomach.plantationledger.data.inventory.InventoryItem
+import com.santhomach.plantationledger.data.inventory.InventoryRepository
 import com.santhomach.plantationledger.data.model.ExcessBalance
 import com.santhomach.plantationledger.data.model.ExpenseSubtype
 import com.santhomach.plantationledger.data.model.ExpenseType
@@ -19,6 +21,7 @@ import com.santhomach.plantationledger.data.schedule.ScheduleRepository
 import com.santhomach.plantationledger.data.schedule.ScheduleTask
 import com.santhomach.plantationledger.data.schedule.TaskCompletion
 import com.santhomach.plantationledger.testutil.FakeDatabase
+import com.santhomach.plantationledger.testutil.FakeInventoryDao
 import com.santhomach.plantationledger.testutil.FakeScheduleDao
 import com.santhomach.plantationledger.testutil.dailyExpense
 import com.santhomach.plantationledger.testutil.group
@@ -72,12 +75,17 @@ class ExportManagerTest {
     private class Device(val filesDir: File) {
         val fake = FakeDatabase().apply { stubTransactions() }
         val schedule = FakeScheduleDao()
+        val inventory = FakeInventoryDao()
         val context: Context = mockk(relaxed = true) { every { filesDir } returns this@Device.filesDir }
         val manager: ExportManager
 
         init {
             every { AppDatabase.getInstance(context) } returns fake.db
-            manager = ExportManager(context) { ScheduleRepository(schedule) }
+            manager = ExportManager(
+                context,
+                scheduleRepository = { ScheduleRepository(schedule) },
+                inventoryRepository = { InventoryRepository(inventory) }
+            )
         }
     }
 
@@ -235,6 +243,58 @@ class ExportManagerTest {
         assertTrue(phone.schedule.allCards().isEmpty())
     }
 
+    private fun FakeInventoryDao.fillWithInventory() {
+        items.value = listOf(
+            InventoryItem(id = 1, name = "Power sprayer", category = "Spraying", count = 2, inUseSince = "2023-04-01",
+                purchasePrice = "18500.50", notes = "ഹോണ്ട engine", createdAt = "2026-11-01T00:00", updatedAt = "2026-11-02T00:00"),
+            InventoryItem(id = 4, name = "Gloves", category = "Safety", count = 0, createdAt = "2026-11-01T00:00",
+                updatedAt = "2026-11-01T00:00")
+        )
+    }
+
+    @Test
+    fun theInventoryIsBackedUpAndRestoredExactly() = runTest {
+        val phone = device("phone")
+        fillWithOneOfEverything(phone.fake, "")
+        phone.inventory.fillWithInventory()
+        val json = phone.manager.exportToJson()
+
+        val newPhone = device("newPhone")
+        newPhone.inventory.items.value = listOf(InventoryItem(id = 1, name = "Something else"), InventoryItem(id = 7, name = "Extra"))
+        newPhone.manager.importFromJson(json)
+
+        assertEquals(phone.inventory.allItems(), newPhone.inventory.allItems())
+        assertEquals(1, newPhone.fake.expenses.all().size)
+    }
+
+    @Test
+    fun anOlderBackupWithoutAnInventoryLeavesThePhonesInventoryAlone() = runTest {
+        val old = device("old")
+        fillWithOneOfEverything(old.fake, "")
+        val json = old.manager.exportToJson()
+            .let { Json.parseToJsonElement(it).jsonObject }
+            .let { JsonObject(it - "inventory").toString() }          // as written before the Inventory existed
+
+        val phone = device("phone")
+        phone.inventory.fillWithInventory()
+        val before = phone.inventory.allItems()
+
+        phone.manager.importFromJson(json)
+
+        assertEquals(before, phone.inventory.allItems())
+    }
+
+    @Test
+    fun aFailedImportDoesNotTouchTheInventory() = runTest {
+        val phone = device("phone")
+        phone.inventory.fillWithInventory()
+        val before = phone.inventory.allItems()
+
+        runCatching { phone.manager.importFromJson("{ not json") }
+
+        assertEquals(before, phone.inventory.allItems())
+    }
+
     @Test
     fun theExportUsesTheDocumentedKeys() = runTest {
         val phone = device("phone")
@@ -242,7 +302,7 @@ class ExportManagerTest {
         val root = Json.parseToJsonElement(phone.manager.exportToJson()).jsonObject
         listOf("export_date", "daily_expenses", "weekly_settlements", "excess_balances", "expense_types",
             "expense_subtypes", "income_types", "worker_types", "permanent_workers", "work_tasks",
-            "worker_payments", "weekly_funds", "vendor_payments", "receipts", "schedule"
+            "worker_payments", "weekly_funds", "vendor_payments", "receipts", "schedule", "inventory"
         ).forEach { key -> assertTrue("missing $key", key in root) }
         assertEquals(1, root.getValue("vendor_payments").jsonArray.size)
     }

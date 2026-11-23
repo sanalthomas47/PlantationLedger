@@ -9,6 +9,8 @@ import com.santhomach.plantationledger.data.backup.AndroidBackupStore
 import com.santhomach.plantationledger.data.backup.BackupStore
 import com.santhomach.plantationledger.data.backup.DailyBackupManager
 import com.santhomach.plantationledger.data.export.ExportManager
+import com.santhomach.plantationledger.data.inventory.InventoryDatabase
+import com.santhomach.plantationledger.data.inventory.InventoryRepository
 import com.santhomach.plantationledger.data.repository.ExpenseRepository
 import com.santhomach.plantationledger.data.schedule.ScheduleDatabase
 import com.santhomach.plantationledger.data.schedule.ScheduleRepository
@@ -41,15 +43,26 @@ object DatabaseModule {
     @Singleton
     fun provideExportManager(
         @ApplicationContext context: Context,
-        scheduleRepository: ScheduleRepository
+        scheduleRepository: ScheduleRepository,
+        inventoryRepository: InventoryRepository
     ): ExportManager {
-        return ExportManager(context) { scheduleRepository }
+        return ExportManager(
+            context,
+            scheduleRepository = { scheduleRepository },
+            inventoryRepository = { inventoryRepository }
+        )
     }
 
     @Provides
     @Singleton
     fun provideScheduleRepository(@ApplicationContext context: Context): ScheduleRepository {
         return ScheduleRepository(ScheduleDatabase.getInstance(context).scheduleDao())
+    }
+
+    @Provides
+    @Singleton
+    fun provideInventoryRepository(@ApplicationContext context: Context): InventoryRepository {
+        return InventoryRepository(InventoryDatabase.getInstance(context).inventoryDao())
     }
 
     @Provides

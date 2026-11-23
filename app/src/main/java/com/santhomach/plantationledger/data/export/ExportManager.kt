@@ -21,6 +21,9 @@ import com.santhomach.plantationledger.data.model.WeeklySettlement
 import com.santhomach.plantationledger.data.model.WorkTask
 import com.santhomach.plantationledger.data.model.WorkerPayment
 import com.santhomach.plantationledger.data.model.WorkerType
+import com.santhomach.plantationledger.data.inventory.InventoryDatabase
+import com.santhomach.plantationledger.data.inventory.InventoryItem
+import com.santhomach.plantationledger.data.inventory.InventoryRepository
 import com.santhomach.plantationledger.data.schedule.ScheduleDatabase
 import com.santhomach.plantationledger.data.schedule.ScheduleExport
 import com.santhomach.plantationledger.data.schedule.ScheduleRepository
@@ -69,7 +72,10 @@ data class ExportData(
     val receipts: List<ExportReceipt> = emptyList(),
     /** Monthly checklist and combination cards; absent in backups made before the Schedule existed. */
     @SerialName("schedule")
-    val schedule: ScheduleExport? = null
+    val schedule: ScheduleExport? = null,
+    /** Equipment, tools and other items; absent in backups made before the Inventory existed. */
+    @SerialName("inventory")
+    val inventory: List<InventoryItem>? = null
 )
 
 /**
@@ -90,11 +96,15 @@ class ExportManager(
     private val context: Context,
     scheduleRepository: () -> ScheduleRepository = {
         ScheduleRepository(ScheduleDatabase.getInstance(context).scheduleDao())
+    },
+    inventoryRepository: () -> InventoryRepository = {
+        InventoryRepository(InventoryDatabase.getInstance(context).inventoryDao())
     }
 ) {
 
     private val database: AppDatabase = AppDatabase.getInstance(context)
     private val schedule: ScheduleRepository by lazy(scheduleRepository)
+    private val inventory: InventoryRepository by lazy(inventoryRepository)
 
     private val json = Json {
         prettyPrint = true
@@ -151,7 +161,8 @@ class ExportManager(
                 weeklyFunds = weeklyFunds,
                 vendorPayments = vendorPayments,
                 receipts = receipts,
-                schedule = schedule.snapshot()
+                schedule = schedule.snapshot(),
+                inventory = inventory.snapshot()
             )
 
             return json.encodeToString(ExportData.serializer(), exportData)
@@ -225,6 +236,8 @@ class ExportManager(
             // The Schedule has its own database. It is restored after the expense data succeeds,
             // and only when the backup contains one; older backups leave it as it is.
             exportData.schedule?.let { schedule.replaceAll(it) }
+            // The Inventory also has its own database, restored the same way.
+            exportData.inventory?.let { inventory.replaceAll(it) }
 
             return if (backupMissingVendorPayments) {
                 "Import complete. Note: this backup was created before vendor payment tracking was " +

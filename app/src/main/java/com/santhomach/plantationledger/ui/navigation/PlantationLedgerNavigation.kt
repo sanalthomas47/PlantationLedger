@@ -15,6 +15,8 @@ import com.santhomach.plantationledger.ui.screens.EfficiencyScreen
 import com.santhomach.plantationledger.ui.screens.ExpenseTypeSummaryScreen
 import com.santhomach.plantationledger.ui.screens.HomeScreen
 import com.santhomach.plantationledger.ui.screens.IncomeBreakdownScreen
+import com.santhomach.plantationledger.ui.screens.InventoryItemScreen
+import com.santhomach.plantationledger.ui.screens.InventoryScreen
 import com.santhomach.plantationledger.ui.screens.ReportsScreen
 import com.santhomach.plantationledger.ui.screens.ScheduleScreen
 import com.santhomach.plantationledger.ui.screens.SearchScreen
@@ -24,6 +26,7 @@ import com.santhomach.plantationledger.ui.screens.WeeklyBalanceScreen
 import com.santhomach.plantationledger.ui.screens.WeeklyFundsScreen
 import com.santhomach.plantationledger.ui.screens.WorkerPaymentScreen
 import com.santhomach.plantationledger.ui.viewmodel.CombinationCardViewModel
+import com.santhomach.plantationledger.ui.viewmodel.InventoryItemViewModel
 import java.time.LocalDate
 
 sealed class Screen(val route: String) {
@@ -47,6 +50,12 @@ sealed class Screen(val route: String) {
     object Efficiency : Screen("income_vs_expense")
     object ScheduleCard : Screen("schedule_card/{cardId}") {
         fun createRoute(cardId: Int): String = "schedule_card/$cardId"
+    }
+
+    object Inventory : Screen("inventory")
+    object InventoryItem : Screen("inventory_item/{itemId}") {
+        /** [itemId] 0 opens a blank page for a new item. */
+        fun createRoute(itemId: Int): String = "inventory_item/$itemId"
     }
 
     object Payments : Screen("payments")
@@ -76,6 +85,7 @@ fun PlantationLedgerNavigation(
                 onNavigateToSchedule = { navController.navigate(Screen.Schedule.route) },
                 onNavigateToIncomeBreakdown = { navController.navigate(Screen.IncomeBreakdown.route) },
                 onNavigateToEfficiency = { navController.navigate(Screen.Efficiency.route) },
+                onNavigateToInventory = { navController.navigate(Screen.Inventory.route) },
                 onNavigateToPayments = { navController.navigate(Screen.Payments.route) },
                 onNavigateToWeeklyFunds = { navController.navigate(Screen.WeeklyFunds.route) },
                 onNavigateToSearch = { navController.navigate(Screen.Search.route) },
@@ -177,6 +187,22 @@ fun PlantationLedgerNavigation(
             })
         ) {
             CombinationCardScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(Screen.Inventory.route) {
+            InventoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenItem = { id -> navController.navigate(Screen.InventoryItem.createRoute(id)) }
+            )
+        }
+
+        composable(
+            route = Screen.InventoryItem.route,
+            arguments = listOf(navArgument(InventoryItemViewModel.ITEM_ID) {
+                type = NavType.IntType
+            })
+        ) {
+            InventoryItemScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.CsvImport.route) {
