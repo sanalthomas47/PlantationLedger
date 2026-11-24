@@ -735,83 +735,35 @@ private fun QuickActionsSection(
                 style = MaterialTheme.typography.labelMedium
             )
             Spacer(modifier = Modifier.height(14.dp))
-            // Rows of four; the 48dp tiles keep their size, only the gaps are smaller.
-            Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton(
-                    "Schedule",
-                    Icons.Default.Checklist,
-                    Color(0xFF1D7A4D),
-                    Modifier.weight(1f),
-                    onSchedule
-                )
-                QuickActionButton(
-                    "By Date",
-                    Icons.Default.CalendarMonth,
-                    Color(0xFF155FC0),
-                    Modifier.weight(1f),
-                    onAddForDate
-                )
-                QuickActionButton(
-                    "Reports",
-                    Icons.Default.BarChart,
-                    Color(0xFF6A3E9A),
-                    Modifier.weight(1f),
-                    onReports
-                )
-                QuickActionButton(
-                    "Payments",
-                    Icons.Default.Payments,
-                    Color(0xFFBF5B00),
-                    Modifier.weight(1f),
-                    onPayments
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton(
-                    "Weekly",
-                    Icons.Default.ListAlt,
-                    Color(0xFF00695C),
-                    Modifier.weight(1f),
-                    onWeekly
-                )
-                QuickActionButton(
-                    "Breakdown",
-                    Icons.Default.PieChart,
-                    Color(0xFFC62828),
-                    Modifier.weight(1f),
-                    onExpenseTypes
-                )
-                QuickActionButton(
-                    "Income",
-                    Icons.Default.Savings,
-                    Color(0xFF8A5A00),
-                    Modifier.weight(1f),
-                    onIncome
-                )
-                QuickActionButton(
-                    "Efficiency",
-                    Icons.Default.Balance,
-                    Color(0xFF3949AB),
-                    Modifier.weight(1f),
-                    onEfficiency
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            // Empty slots keep the third row's tiles lined up with the columns above.
-            Row(modifier = Modifier.fillMaxWidth()) {
-                QuickActionButton(
-                    "Inventory",
-                    Icons.Default.Inventory2,
-                    Color(0xFF6D4C41),
-                    Modifier.weight(1f),
-                    onInventory
-                )
-                repeat(3) { Spacer(modifier = Modifier.weight(1f)) }
+            // Three rows of three, each tile centred in its column.
+            val actions = listOf(
+                QuickAction("Schedule", Icons.Default.Checklist, Color(0xFF1D7A4D), onSchedule),
+                QuickAction("By Date", Icons.Default.CalendarMonth, Color(0xFF155FC0), onAddForDate),
+                QuickAction("Reports", Icons.Default.BarChart, Color(0xFF6A3E9A), onReports),
+                QuickAction("Payments", Icons.Default.Payments, Color(0xFFBF5B00), onPayments),
+                QuickAction("Weekly", Icons.Default.ListAlt, Color(0xFF00695C), onWeekly),
+                QuickAction("Breakdown", Icons.Default.PieChart, Color(0xFFC62828), onExpenseTypes),
+                QuickAction("Income", Icons.Default.Savings, Color(0xFF8A5A00), onIncome),
+                QuickAction("Efficiency", Icons.Default.Balance, Color(0xFF3949AB), onEfficiency),
+                QuickAction("Inventory", Icons.Default.Inventory2, Color(0xFF6D4C41), onInventory)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                actions.chunked(3).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        row.forEach { action ->
+                            QuickActionButton(action.label, action.icon, action.color, Modifier.weight(1f), action.onClick)
+                        }
+                    }
+                }
             }
         }
     }
 }
+
+private class QuickAction(val label: String, val icon: ImageVector, val color: Color, val onClick: () -> Unit)
 
 @Composable
 private fun QuickActionButton(
@@ -823,23 +775,24 @@ private fun QuickActionButton(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 2.dp, vertical = 6.dp),
+            .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        // A rounded tile as before, a little larger than the original 48dp.
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(56.dp)
+                .clip(RoundedCornerShape(16.dp))
                 .background(color),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(28.dp),
                 tint = Color.White
             )
         }
@@ -848,7 +801,7 @@ private fun QuickActionButton(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            style = MaterialTheme.typography.labelSmall
+            style = MaterialTheme.typography.labelMedium
         )
     }
 }
